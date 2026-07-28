@@ -15,6 +15,9 @@ and the project follows semantic versioning for its API and schema contracts.
 - Reproducible dependency pins and Python lint/format checks.
 - A local-only rights-gated metadata exporter, source registry, read-only
   Bitrix bridge, atomic snapshot lifecycle, guardrails, and operator guide.
+- A source-by-source pre-publication rights audit with aggregate production
+  coverage, official evidence links, proposed decisions, and approval
+  prerequisites.
 
 ### Changed
 

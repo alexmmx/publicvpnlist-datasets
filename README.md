@@ -24,6 +24,8 @@ It never performs GitHub publication or exports VPN profiles.
   [`scripts/validate.py`](scripts/validate.py)
 - A local-only, deny-by-default metadata exporter with a read-only Bitrix
   bridge: [`docs/exporter-operations.md`](docs/exporter-operations.md)
+- The pre-publication source-rights evidence review:
+  [`docs/source-rights-audit-2026-07-28.md`](docs/source-rights-audit-2026-07-28.md)
 - curl, Python, JavaScript and PHP examples: [`examples/`](examples/)
 - Postman and Bruno collections: [`collections/`](collections/)
 
