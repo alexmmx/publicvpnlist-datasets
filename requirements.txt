@@ -1,4 +1,4 @@
 jsonschema==4.25.0
-openapi-spec-validator==0.7.2
+openapi-spec-validator==0.9.0
 PyYAML==6.0.2
 rfc3339-validator==0.1.4
