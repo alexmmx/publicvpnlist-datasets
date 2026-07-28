@@ -16,3 +16,9 @@ dataset mirror.
 
 This table is a publication gate, not legal advice. Confirm current upstream
 terms and preserve required source attribution before adding any dataset.
+
+The machine-readable deny-by-default gate is
+[`config/dataset_sources.json`](config/dataset_sources.json). Its real sources
+are currently `pending` or `unknown`, with metadata export disabled. Changing
+that state requires documented evidence and review as described in
+[`docs/exporter-operations.md`](docs/exporter-operations.md).

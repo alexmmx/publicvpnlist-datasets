@@ -7,6 +7,9 @@ offline validators for [PublicVPNList](https://publicvpnlist.com/). It is a
 No real endpoint snapshot is currently published here. The included records
 are synthetic and use documentation-only IP ranges. Real snapshots may be
 added only after source-by-source redistribution rights have been confirmed.
+The exporter is implemented but intentionally cannot publish any current real
+source: the canonical source registry contains no approved metadata source.
+It never performs GitHub publication or exports VPN profiles.
 
 ## What is included
 
@@ -19,6 +22,8 @@ added only after source-by-source redistribution rights have been confirmed.
   and [`tools/pvl_api.py`](tools/pvl_api.py)
 - Offline schema, semantic, checksum, CSV, ZIP and secret validation:
   [`scripts/validate.py`](scripts/validate.py)
+- A local-only, deny-by-default metadata exporter with a read-only Bitrix
+  bridge: [`docs/exporter-operations.md`](docs/exporter-operations.md)
 - curl, Python, JavaScript and PHP examples: [`examples/`](examples/)
 - Postman and Bruno collections: [`collections/`](collections/)
 

@@ -120,6 +120,11 @@ def test_openvpn_private_key_is_rejected(tmp_path: Path) -> None:
         (["Private", "Key = synthetic"], "wireguard_private_key"),
         (["Preshared", "Key = synthetic"], "wireguard_preshared_key"),
         (["provisioning_", "token=synthetic"], "provisioning_token"),
+        (["api_", "token=synthetic"], "api_token"),
+        (["bitrix_", "sessid=synthetic"], "bitrix_session"),
+        (["Authorization", ": Bearer synthetic"], "authorization_bearer"),
+        (["Cookie", ": session=synthetic"], "cookie_header"),
+        (["/var", "/www/synthetic/private"], "absolute_server_path"),
         (["-----BEGIN ", "PRIVATE KEY-----"], "private_key_pem"),
     ],
 )

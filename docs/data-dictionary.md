@@ -29,8 +29,9 @@ responses additionally expose `total`, `page`, `per_page` and `pages`.
 | `record_count` | integer | Number of eligible records |
 | `fresh_count` / `stale_count` | integer | Freshness partition; sum equals record count |
 | `countries_count` | integer | Number of distinct non-null country codes |
+| `source_count` | integer | Number of distinct approved source names |
 | `protocols` | unique array | Protocols actually present |
-| `protocols_count` | integer, optional | If emitted, must match distinct protocols |
+| `protocols_count` | integer | Number of distinct protocols |
 | `checksum_sha256` | string | Lowercase snapshot integrity digest |
 | `source_url` | URI | Canonical catalog page |
 | `documentation_url` | URI | API documentation |

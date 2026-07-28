@@ -51,6 +51,13 @@
           "type": "string",
           "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,179}$"
         },
+        "filename": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,179}$"
+        },
+        "content_type": {
+          "enum": ["application/json", "text/csv", "text/plain", "application/xml"]
+        },
         "url": {
           "type": "string",
           "format": "uri",
@@ -64,6 +71,8 @@
           "maxLength": 2048
         },
         "bytes": {"type": "integer", "minimum": 1},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "record_count": {"type": "integer", "minimum": 1},
         "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
       }
     },

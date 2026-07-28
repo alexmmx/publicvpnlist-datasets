@@ -13,6 +13,8 @@ and the project follows semantic versioning for its API and schema contracts.
 - Offline semantic, manifest, CSV, ZIP and credential-leak validation.
 - Positive and negative contract, security and mock-client tests.
 - Reproducible dependency pins and Python lint/format checks.
+- A local-only rights-gated metadata exporter, source registry, read-only
+  Bitrix bridge, atomic snapshot lifecycle, guardrails, and operator guide.
 
 ### Changed
 
@@ -28,6 +30,8 @@ and the project follows semantic versioning for its API and schema contracts.
 - Added checks for path traversal, Unicode archive names, symlinks, encrypted
   and duplicate ZIP entries, compression bombs and embedded VPN credentials.
 - Added Unicode-aware CSV formula-injection rejection.
+- Added HMAC-derived public IDs, deny-by-default source approval, cross-format
+  round trips, bundle checksums, output path containment, and export locking.
 
 ## 1.0.0 - 2026-07-28
 

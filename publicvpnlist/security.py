@@ -39,8 +39,16 @@ SECRET_PATTERNS = {
     "openvpn_auth": re.compile(r"^\s*auth-user-pass(?:\s|$)", re.I),
     "client_secret": re.compile(r"\bclient[_-]?secret\s*[:=]", re.I),
     "access_token": re.compile(r"\baccess[_-]?token\s*[:=]", re.I),
+    "api_token": re.compile(r"\bapi[_-]?token\s*[:=]", re.I),
+    "authorization_bearer": re.compile(r"\bauthorization\s*:\s*bearer\s+\S+", re.I),
+    "cookie_header": re.compile(r"^\s*(?:cookie|set-cookie)\s*:", re.I),
+    "bitrix_session": re.compile(r"\b(?:bitrix_sessid|phpsessid)\s*[:=]", re.I),
     "password": re.compile(r"\b(?:password|passwd)\s*[:=]", re.I),
     "provisioning_token": re.compile(r"\bprovisioning[_-]?token\s*[:=]", re.I),
+    "absolute_server_path": re.compile(
+        r"(?:^|[\s\"'=])/(?:home|root|srv|var/www|etc)/(?:[^\s\"']+)",
+        re.I,
+    ),
 }
 SENSITIVE_IMAGE_NAME = re.compile(
     r"(?:wireguard|vpn|profile|config|qr).*(?:key|secret|token|credential)|"

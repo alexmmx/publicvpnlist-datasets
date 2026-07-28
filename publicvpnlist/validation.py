@@ -153,6 +153,13 @@ def validate_dataset_semantics(payload: dict[str, Any]) -> None:
         failures.append("metadata.protocols: does not match distinct record protocols")
     if "protocols_count" in metadata and metadata["protocols_count"] != len(protocols):
         failures.append("metadata.protocols_count: does not match distinct protocols")
+    sources = {
+        record.get("source_name")
+        for record in records
+        if isinstance(record, dict) and isinstance(record.get("source_name"), str)
+    }
+    if "source_count" in metadata and metadata["source_count"] != len(sources):
+        failures.append("metadata.source_count: does not match distinct sources")
 
     if failures:
         raise ValidationFailure("dataset semantic validation:\n" + "\n".join(failures))
@@ -234,6 +241,12 @@ def validate_manifest(
             continue
         if item.get("bytes") != path.stat().st_size:
             failures.append(f"manifest.formats[{index}].bytes: size mismatch")
+        if "filename" in item and item["filename"] != relative:
+            failures.append(f"manifest.formats[{index}].filename: path mismatch")
+        if "size_bytes" in item and item["size_bytes"] != path.stat().st_size:
+            failures.append(f"manifest.formats[{index}].size_bytes: size mismatch")
+        if "record_count" in item and item["record_count"] != manifest.get("record_count"):
+            failures.append(f"manifest.formats[{index}].record_count: count mismatch")
         if item.get("sha256") != _sha256(path):
             failures.append(f"manifest.formats[{index}].sha256: checksum mismatch")
     if seen != supported_formats:

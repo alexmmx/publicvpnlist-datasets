@@ -10,8 +10,8 @@
     {
       "format": "json",
       "path": "dataset.synthetic.json",
-      "bytes": 2241,
-      "sha256": "46a04726d816fd0f36dfd2579ae190e25b136c962ae2ca2e7c45dfc745ed9b1f"
+      "bytes": 2264,
+      "sha256": "1bbcfc6d648504a69c5e1815626202fa99d115fe87d379bc64f79418b6ffd557"
     },
     {
       "format": "csv",

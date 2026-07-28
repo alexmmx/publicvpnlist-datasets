@@ -74,6 +74,7 @@
         "fresh_count",
         "stale_count",
         "countries_count",
+        "source_count",
         "protocols",
         "schema_version",
         "checksum_sha256",
@@ -96,6 +97,7 @@
         "fresh_count": {"type": "integer", "minimum": 0},
         "stale_count": {"type": "integer", "minimum": 0},
         "countries_count": {"type": "integer", "minimum": 1},
+        "source_count": {"type": "integer", "minimum": 1},
         "protocols_count": {"type": "integer", "minimum": 1},
         "protocols": {
           "type": "array",

@@ -9,6 +9,7 @@
     "fresh_count": 1,
     "stale_count": 0,
     "countries_count": 1,
+    "source_count": 1,
     "protocols_count": 1,
     "protocols": ["openvpn"],
     "schema_version": "1.0",

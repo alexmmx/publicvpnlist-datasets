@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from publicvpnlist.exporter.policy import ExportSettings, SourceRegistry  # noqa: E402
 from publicvpnlist.security import scan_repository  # noqa: E402
 from publicvpnlist.validation import (  # noqa: E402
     ValidationFailure,
@@ -55,6 +56,11 @@ def validate_schemas() -> dict[str, dict]:
         Draft202012Validator.check_schema(schema)
         schemas[path.name] = schema
     return schemas
+
+
+def validate_exporter_configuration() -> None:
+    SourceRegistry.from_path(ROOT / "config" / "dataset_sources.json")
+    ExportSettings.from_path(ROOT / "config" / "exporter.json", ROOT)
 
 
 def validate_openapi(schemas: dict[str, dict]) -> dict:
@@ -276,6 +282,7 @@ def main() -> int:
     try:
         policy = load_json(ROOT / "validation-policy.json")
         schemas = validate_schemas()
+        validate_exporter_configuration()
         contract = validate_openapi(schemas)
         validate_fixtures(schemas, contract, policy)
         validate_collections(contract)

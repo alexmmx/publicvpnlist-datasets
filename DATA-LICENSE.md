@@ -27,3 +27,8 @@ logging.
 The canonical service may be governed by additional current terms published at
 <https://publicvpnlist.com/license/>. This document records the repository
 publication gate and is not legal advice.
+
+The generator enforces these decisions through
+[`config/dataset_sources.json`](config/dataset_sources.json). Source ingestion
+or visibility on the website is not evidence of repository republication
+permission.
