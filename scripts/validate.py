@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import csv
 import hashlib
+import ipaddress
 import json
 import re
 import sys
@@ -28,13 +29,49 @@ manifest_schema = json.loads((ROOT / "schema" / "manifest.schema.json").read_tex
 jsonschema.Draft202012Validator.check_schema(server_schema)
 jsonschema.Draft202012Validator.check_schema(manifest_schema)
 
+openapi_path = ROOT / "openapi" / "openapi.json"
+pages_openapi_path = ROOT / "docs" / "openapi.json"
+openapi = json.loads(openapi_path.read_text(encoding="utf-8"))
+required_paths = {
+    "/servers",
+    "/servers/{public_id}",
+    "/countries",
+    "/protocols",
+    "/stats",
+    "/dataset",
+    "/health",
+}
+if openapi.get("openapi") != "3.1.0":
+    fail("OpenAPI version mismatch")
+if set(openapi.get("paths", {})) != required_paths:
+    fail("OpenAPI endpoint set mismatch")
+if openapi_path.read_bytes() != pages_openapi_path.read_bytes():
+    fail("GitHub Pages OpenAPI copy is out of sync")
+
+fixture = json.loads((ROOT / "fixtures" / "dataset.synthetic.json").read_text(encoding="utf-8"))
+jsonschema.validate(fixture, server_schema)
+for row in fixture["records"]:
+    if ipaddress.ip_address(row["ip"]).is_global:
+        fail("synthetic fixture contains a globally routable IP address")
+
+error_fixture = json.loads((ROOT / "fixtures" / "error.synthetic.json").read_text(encoding="utf-8"))
+jsonschema.validate(error_fixture, openapi["components"]["schemas"]["Error"])
+
+postman = json.loads(
+    (ROOT / "collections" / "postman" / "PublicVPNList.postman_collection.json").read_text(encoding="utf-8")
+)
+if postman.get("info", {}).get("schema") != "https://schema.getpostman.com/json/collection/v2.1.0/collection.json":
+    fail("Postman collection schema mismatch")
+
 for path in ROOT.rglob("*"):
+    if any(part in {".git", ".venv", "__pycache__"} for part in path.parts):
+        continue
     if path.is_file() and path.stat().st_size <= 64 * 1024 * 1024:
         if SECRET_RE.search(path.read_bytes()):
             fail(f"possible secret: {path.relative_to(ROOT)}")
 
 if not LATEST.exists():
-    print("validated schemas and repository; endpoint dataset is not published")
+    print("validated OpenAPI, schemas, fixtures, collections and repository; endpoint dataset is not published")
     raise SystemExit(0)
 
 payload = json.loads((LATEST / "servers.json").read_text(encoding="utf-8"))

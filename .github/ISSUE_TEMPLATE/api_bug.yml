@@ -1,0 +1,32 @@
+name: API contract problem
+description: Report a reproducible API, schema or documentation mismatch
+title: "[API] "
+labels: ["api"]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, private keys or complete VPN profiles.
+  - type: input
+    id: endpoint
+    attributes:
+      label: Endpoint
+      placeholder: /api/v1/servers
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: request_id
+    attributes:
+      label: Request ID
+      description: Optional public request_id from the safe API error response

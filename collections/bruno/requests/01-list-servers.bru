@@ -1,0 +1,15 @@
+meta {
+  name: List servers
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/servers?country=US&per_page=10&sort=score&order=desc
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}

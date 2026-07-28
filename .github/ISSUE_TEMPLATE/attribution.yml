@@ -1,0 +1,25 @@
+name: Attribution or removal request
+description: Request a source correction, attribution update or listing review
+title: "[Attribution] "
+labels: ["attribution"]
+body:
+  - type: markdown
+    attributes:
+      value: For sensitive information, use https://publicvpnlist.com/contacts/ instead of a public issue.
+  - type: dropdown
+    id: request_type
+    attributes:
+      label: Request type
+      options:
+        - Attribution correction
+        - Source correction
+        - Listing review or removal
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Public details
+      description: Do not include credentials, private keys or complete VPN profiles.
+    validations:
+      required: true

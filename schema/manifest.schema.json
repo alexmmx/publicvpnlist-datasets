@@ -1,16 +1,75 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://publicvpnlist.com/schema/manifest-1.0.json",
+  "title": "PublicVPNList export manifest",
   "type": "object",
-  "required": ["schema_version", "dataset_version", "snapshot_id", "generated_at", "record_count", "formats", "config_bundle"],
+  "required": [
+    "schema_version",
+    "dataset_version",
+    "snapshot_id",
+    "generated_at",
+    "expires_at",
+    "record_count",
+    "score_notice",
+    "formats",
+    "config_bundle",
+    "archive_policy",
+    "license_review"
+  ],
   "properties": {
     "schema_version": {"const": "1.0"},
-    "dataset_version": {"type": "string"},
+    "dataset_version": {
+      "type": "string",
+      "pattern": "^\\d{8}T\\d{6}Z-[a-f0-9]{12}$"
+    },
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
     "record_count": {"type": "integer", "minimum": 1},
-    "formats": {"type": "array", "minItems": 4},
+    "score_notice": {"type": "string", "minLength": 1},
+    "formats": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["format", "url", "bytes", "sha256"],
+        "properties": {
+          "format": {"enum": ["json", "csv", "txt", "xml"]},
+          "url": {"type": "string", "format": "uri"},
+          "bytes": {"type": "integer", "minimum": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "versioned_url": {"type": "string", "format": "uri"},
+          "latest_archived_url": {"type": "string", "format": "uri"}
+        }
+      }
+    },
     "config_bundle": {
       "type": "object",
-      "required": ["config_count", "sha256", "status"],
-      "properties": {"config_count": {"type": "integer", "minimum": 0}}
+      "required": ["url", "config_count", "bytes", "sha256", "status"],
+      "properties": {
+        "url": {"type": "string", "format": "uri"},
+        "config_count": {"type": "integer", "minimum": 0},
+        "bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "status": {"type": "string"},
+        "versioned_url": {"type": "string", "format": "uri"},
+        "latest_archived_url": {"type": "string", "format": "uri"}
+      }
+    },
+    "archive_policy": {
+      "type": "object",
+      "required": ["cadence", "interval_seconds", "retention_days"],
+      "properties": {
+        "cadence": {"type": "string"},
+        "interval_seconds": {"type": "integer", "minimum": 1},
+        "retention_days": {"type": "integer", "minimum": 1},
+        "current_snapshot_archived": {"type": "boolean"},
+        "latest_archived_version": {"type": ["string", "null"]}
+      }
+    },
+    "license_review": {
+      "type": "string",
+      "minLength": 1
     }
   }
 }

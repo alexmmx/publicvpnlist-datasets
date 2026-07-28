@@ -1,17 +1,53 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://publicvpnlist.com/schema/servers-1.0.json",
+  "title": "PublicVPNList OpenVPN dataset",
   "type": "object",
   "required": ["metadata", "records"],
   "properties": {
     "metadata": {
       "type": "object",
-      "required": ["dataset_version", "snapshot_id", "generated_at", "expires_at", "record_count", "schema_version", "checksum_sha256"],
+      "required": [
+        "dataset_version",
+        "snapshot_id",
+        "generated_at",
+        "expires_at",
+        "next_update_at",
+        "record_count",
+        "fresh_count",
+        "stale_count",
+        "countries_count",
+        "protocols",
+        "schema_version",
+        "checksum_sha256",
+        "source_url",
+        "documentation_url",
+        "license_url",
+        "methodology_url",
+        "score_notice"
+      ],
       "properties": {
         "dataset_version": {"type": "string", "pattern": "^\\d{8}T\\d{6}Z-[a-f0-9]{12}$"},
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "expires_at": {"type": "string", "format": "date-time"},
+        "next_update_at": {"type": "string", "format": "date-time"},
         "record_count": {"type": "integer", "minimum": 1},
+        "fresh_count": {"type": "integer", "minimum": 0},
+        "stale_count": {"type": "integer", "minimum": 0},
+        "countries_count": {"type": "integer", "minimum": 1},
+        "protocols": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"const": "openvpn"}
+        },
         "schema_version": {"const": "1.0"},
-        "checksum_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        "checksum_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "source_url": {"type": "string", "format": "uri"},
+        "documentation_url": {"type": "string", "format": "uri"},
+        "license_url": {"type": "string", "format": "uri"},
+        "methodology_url": {"type": "string", "format": "uri"},
+        "score_notice": {"type": "string", "minLength": 1}
       }
     },
     "records": {
@@ -19,15 +55,70 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "country_code", "protocol", "transport", "port", "technical_quality_score", "last_checked_at"],
+        "required": [
+          "id",
+          "country_code",
+          "country_name",
+          "city",
+          "hostname",
+          "ip",
+          "protocol",
+          "transport",
+          "port",
+          "speed_mbps",
+          "latency_ms",
+          "uptime_percent_7d",
+          "uptime_hours",
+          "sessions",
+          "technical_quality_score",
+          "score_label",
+          "last_checked_at",
+          "first_seen_at",
+          "config_updated_at",
+          "freshness_status",
+          "availability_status",
+          "source_name",
+          "source_url",
+          "server_page_url",
+          "config_download_url",
+          "risk_flags",
+          "config_sha256"
+        ],
         "not": {"anyOf": [{"required": ["server_id"]}, {"required": ["legacy_id"]}]},
         "properties": {
           "id": {"type": "string", "pattern": "^pvl_[a-f0-9]{24}$"},
           "country_code": {"type": ["string", "null"], "pattern": "^[A-Z]{2}$"},
+          "country_name": {"type": ["string", "null"]},
+          "city": {"type": ["string", "null"]},
+          "hostname": {"type": ["string", "null"]},
+          "ip": {"type": ["string", "null"]},
           "protocol": {"const": "openvpn"},
           "transport": {"enum": ["tcp", "udp"]},
           "port": {"type": "integer", "minimum": 1, "maximum": 65535},
-          "technical_quality_score": {"type": "integer", "minimum": 0, "maximum": 100}
+          "speed_mbps": {"type": ["number", "null"], "minimum": 0},
+          "latency_ms": {"type": ["number", "null"], "minimum": 0},
+          "uptime_percent_7d": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+          "uptime_hours": {"type": ["number", "null"], "minimum": 0},
+          "sessions": {"type": ["integer", "null"], "minimum": 0},
+          "technical_quality_score": {"type": "integer", "minimum": 0, "maximum": 100},
+          "score_label": {"type": "string"},
+          "last_checked_at": {"type": ["string", "null"], "format": "date-time"},
+          "first_seen_at": {"type": ["string", "null"], "format": "date-time"},
+          "config_updated_at": {"type": ["string", "null"], "format": "date-time"},
+          "freshness_status": {"enum": ["fresh", "recent"]},
+          "availability_status": {"const": "online_at_last_check"},
+          "source_name": {"type": "string"},
+          "source_url": {"type": "string", "format": "uri"},
+          "server_page_url": {"type": "string", "format": "uri"},
+          "config_download_url": {"type": ["string", "null"], "format": "uri"},
+          "risk_flags": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "config_sha256": {
+            "type": ["string", "null"],
+            "pattern": "^[a-f0-9]{64}$"
+          }
         }
       }
     }

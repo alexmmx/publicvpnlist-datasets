@@ -14,11 +14,37 @@ trust. Endpoint state can change after a snapshot is published.
 - API v1: https://publicvpnlist.com/api/
 - Canonical JSON, CSV, TXT and XML downloads: https://publicvpnlist.com/exports/
 - Methodology: https://publicvpnlist.com/methodology/
+- OpenAPI 3.1: [`openapi/openapi.json`](openapi/openapi.json)
 - Dataset schemas: [`schema/`](schema/)
 - Request examples: [`examples/`](examples/)
+- Postman and Bruno collections: [`collections/`](collections/)
+- Data dictionary and integration guide: [`docs/`](docs/)
 
 Check `generated_at`, `expires_at` and each `last_checked_at` before using a
 record obtained from the API or canonical exports.
+
+## Quick start
+
+```sh
+python tools/pvl_api.py servers \
+  --param country=US \
+  --param per_page=10
+```
+
+The client uses only the Python standard library. Additional curl, Python, PHP
+and JavaScript examples are in [`examples/`](examples/). All fixture endpoint
+addresses are synthetic and non-routable.
+
+## Validation
+
+```sh
+python -m pip install jsonschema==4.25.0
+python scripts/validate.py
+python -m unittest discover -s tests -v
+```
+
+CI validates the OpenAPI contract, JSON Schemas, synthetic fixtures, collections
+and secret patterns on pushes and pull requests.
 
 ## Repository scope
 

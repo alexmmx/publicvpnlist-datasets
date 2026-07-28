@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "dataset_version": "20260728T000000Z-000000000000",
+    "snapshot_id": "synthetic-example",
+    "generated_at": "2026-07-28T00:00:00Z",
+    "expires_at": "2026-07-28T00:15:00Z",
+    "next_update_at": "2026-07-28T00:05:00Z",
+    "record_count": 1,
+    "fresh_count": 1,
+    "stale_count": 0,
+    "countries_count": 1,
+    "protocols": ["openvpn"],
+    "schema_version": "1.0",
+    "checksum_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "source_url": "https://example.invalid/",
+    "documentation_url": "https://publicvpnlist.com/api/",
+    "license_url": "https://publicvpnlist.com/license/",
+    "methodology_url": "https://publicvpnlist.com/methodology/",
+    "score_notice": "Technical quality score is not a privacy, identity or trust assessment."
+  },
+  "records": [
+    {
+      "id": "pvl_000000000000000000000001",
+      "country_code": "ZZ",
+      "country_name": "Synthetic example",
+      "city": null,
+      "hostname": "vpn.example.invalid",
+      "ip": "192.0.2.10",
+      "protocol": "openvpn",
+      "transport": "udp",
+      "port": 1194,
+      "speed_mbps": 100.5,
+      "latency_ms": 25.25,
+      "uptime_percent_7d": null,
+      "uptime_hours": null,
+      "sessions": null,
+      "technical_quality_score": 80,
+      "score_label": "Good",
+      "last_checked_at": "2026-07-27T23:59:00Z",
+      "first_seen_at": "2026-07-01T00:00:00Z",
+      "config_updated_at": null,
+      "freshness_status": "fresh",
+      "availability_status": "online_at_last_check",
+      "source_name": "Synthetic fixture",
+      "source_url": "https://example.invalid/source",
+      "server_page_url": "https://example.invalid/api/v1/servers/pvl_000000000000000000000001",
+      "config_download_url": null,
+      "risk_flags": ["third_party_server", "privacy_not_assessed", "state_may_change"],
+      "config_sha256": null
+    }
+  ]
+}

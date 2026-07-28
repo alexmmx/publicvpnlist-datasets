@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "invalid_parameter",
+    "message": "country must be a two-letter ISO code.",
+    "parameter": "country",
+    "request_id": "synthetic-request-id"
+  }
+}

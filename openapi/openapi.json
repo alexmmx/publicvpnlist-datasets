@@ -1,0 +1,93 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PublicVPNList API",
+    "version": "1.0.0",
+    "description": "Technically checked metadata for third-party public OpenVPN endpoints. Technical checks do not assess privacy, identity or operator trust.",
+    "termsOfService": "https://publicvpnlist.com/license/",
+    "license": {
+      "name": "PublicVPNList data terms",
+      "url": "https://publicvpnlist.com/license/"
+    }
+  },
+  "servers": [{"url": "https://publicvpnlist.com/api/v1"}],
+  "paths": {
+    "/servers": {
+      "get": {
+        "summary": "List OpenVPN server records",
+        "parameters": [
+          {"name":"country","in":"query","schema":{"type":"string","pattern":"^[A-Z]{2}$"}},
+          {"name":"protocol","in":"query","schema":{"type":"string","enum":["openvpn"]}},
+          {"name":"transport","in":"query","schema":{"type":"string","enum":["tcp","udp"]}},
+          {"name":"port","in":"query","schema":{"type":"integer","minimum":1,"maximum":65535}},
+          {"name":"fresh_within","in":"query","schema":{"type":"integer","minimum":1,"maximum":259200}},
+          {"name":"min_speed","in":"query","schema":{"type":"number","minimum":0}},
+          {"name":"max_latency","in":"query","schema":{"type":"number","minimum":0}},
+          {"name":"min_uptime","in":"query","schema":{"type":"number","minimum":0,"maximum":100}},
+          {"name":"status","in":"query","schema":{"type":"string","enum":["online"]}},
+          {"name":"sort","in":"query","schema":{"type":"string","enum":["speed","latency","uptime","last_checked","score","first_seen"]}},
+          {"name":"order","in":"query","schema":{"type":"string","enum":["asc","desc"]}},
+          {"name":"page","in":"query","schema":{"type":"integer","minimum":1}},
+          {"name":"per_page","in":"query","schema":{"type":"integer","minimum":1,"maximum":200}},
+          {"name":"fields","in":"query","schema":{"type":"string"}},
+          {"name":"format","in":"query","schema":{"type":"string","enum":["json"]}}
+        ],
+        "responses": {
+          "200":{"description":"Paginated records","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ListResponse"}}}},
+          "400":{"$ref":"#/components/responses/Error"},
+          "429":{"$ref":"#/components/responses/Error"},
+          "500":{"$ref":"#/components/responses/Error"}
+        }
+      },
+      "head":{"responses":{"200":{"description":"Headers for the current representation"}}},
+      "options":{"responses":{"204":{"description":"CORS preflight"}}}
+    },
+    "/servers/{public_id}": {
+      "get": {
+        "summary":"Get one server record",
+        "parameters":[{"name":"public_id","in":"path","required":true,"schema":{"type":"string","pattern":"^pvl_[a-f0-9]{24}$"}}],
+        "responses":{"200":{"description":"Server record"},"404":{"$ref":"#/components/responses/Error"}}
+      }
+    },
+    "/countries":{"get":{"summary":"List countries","responses":{"200":{"description":"Country list"}}}},
+    "/protocols":{"get":{"summary":"List protocols","responses":{"200":{"description":"Protocol list"}}}},
+    "/stats":{"get":{"summary":"Get dataset counters","responses":{"200":{"description":"Dataset counters"}}}},
+    "/dataset":{"get":{"summary":"Get dataset lifecycle metadata","responses":{"200":{"description":"Dataset metadata"}}}},
+    "/health":{"get":{"summary":"Get lightweight snapshot health","responses":{"200":{"description":"Snapshot health"},"429":{"$ref":"#/components/responses/Error"}}}}
+  },
+  "components": {
+    "schemas": {
+      "Server": {
+        "type":"object",
+        "required":["id","country_code","protocol","transport","port","technical_quality_score","last_checked_at"],
+        "properties":{
+          "id":{"type":"string","pattern":"^pvl_[a-f0-9]{24}$"},
+          "country_code":{"type":["string","null"]},
+          "country_name":{"type":["string","null"]},
+          "hostname":{"type":["string","null"]},
+          "ip":{"type":["string","null"]},
+          "protocol":{"type":"string","const":"openvpn"},
+          "transport":{"type":"string","enum":["tcp","udp"]},
+          "port":{"type":"integer"},
+          "speed_mbps":{"type":["number","null"]},
+          "latency_ms":{"type":["number","null"]},
+          "uptime_percent_7d":{"type":["number","null"]},
+          "technical_quality_score":{"type":"integer","minimum":0,"maximum":100},
+          "last_checked_at":{"type":["string","null"],"format":"date-time"},
+          "risk_flags":{"type":"array","items":{"type":"string"}}
+        }
+      },
+      "ListResponse": {
+        "type":"object",
+        "required":["data","meta","links"],
+        "properties":{"data":{"type":"array","items":{"$ref":"#/components/schemas/Server"}},"meta":{"type":"object"},"links":{"type":"object"}}
+      },
+      "Error": {
+        "type":"object",
+        "required":["error"],
+        "properties":{"error":{"type":"object","required":["code","message","request_id"],"properties":{"code":{"type":"string"},"message":{"type":"string"},"parameter":{"type":"string"},"request_id":{"type":"string"}}}}
+      }
+    },
+    "responses":{"Error":{"description":"Safe API error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}}
+  }
+}
