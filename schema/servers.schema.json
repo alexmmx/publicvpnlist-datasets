@@ -1,12 +1,69 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://publicvpnlist.com/schema/servers-1.0.json",
-  "title": "PublicVPNList OpenVPN dataset",
+  "title": "PublicVPNList server metadata snapshot",
+  "description": "Canonical schema for the current API-compatible OpenVPN metadata snapshot. No VPN credentials are included.",
   "type": "object",
+  "additionalProperties": false,
   "required": ["metadata", "records"],
   "properties": {
-    "metadata": {
+    "metadata": {"$ref": "#/$defs/DatasetMetadata"},
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/Server"}
+    }
+  },
+  "$defs": {
+    "NullableDateTime": {
+      "anyOf": [
+        {"type": "string", "format": "date-time"},
+        {"type": "null"}
+      ]
+    },
+    "NullableUri": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "minLength": 8,
+          "maxLength": 2048
+        },
+        {"type": "null"}
+      ]
+    },
+    "NullableHostname": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "hostname",
+          "pattern": "^(?=.{1,253}\\.?$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)*[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.?$",
+          "minLength": 1,
+          "maxLength": 253
+        },
+        {"type": "null"}
+      ]
+    },
+    "NullableIp": {
+      "anyOf": [
+        {"type": "string", "format": "ipv4"},
+        {"type": "string", "format": "ipv6"},
+        {"type": "null"}
+      ]
+    },
+    "NullableNonNegativeNumber": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "NullablePercent": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "DatasetMetadata": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "dataset_version",
         "snapshot_id",
@@ -27,8 +84,11 @@
         "score_notice"
       ],
       "properties": {
-        "dataset_version": {"type": "string", "pattern": "^\\d{8}T\\d{6}Z-[a-f0-9]{12}$"},
-        "snapshot_id": {"type": "string", "minLength": 1},
+        "dataset_version": {
+          "type": "string",
+          "pattern": "^\\d{8}T\\d{6}Z-[a-f0-9]{12}$"
+        },
+        "snapshot_id": {"type": "string", "minLength": 1, "maxLength": 128},
         "generated_at": {"type": "string", "format": "date-time"},
         "expires_at": {"type": "string", "format": "date-time"},
         "next_update_at": {"type": "string", "format": "date-time"},
@@ -36,90 +96,238 @@
         "fresh_count": {"type": "integer", "minimum": 0},
         "stale_count": {"type": "integer", "minimum": 0},
         "countries_count": {"type": "integer", "minimum": 1},
+        "protocols_count": {"type": "integer", "minimum": 1},
         "protocols": {
           "type": "array",
           "minItems": 1,
-          "items": {"const": "openvpn"}
+          "uniqueItems": true,
+          "items": {"enum": ["openvpn"]}
         },
         "schema_version": {"const": "1.0"},
-        "checksum_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "source_url": {"type": "string", "format": "uri"},
-        "documentation_url": {"type": "string", "format": "uri"},
-        "license_url": {"type": "string", "format": "uri"},
-        "methodology_url": {"type": "string", "format": "uri"},
-        "score_notice": {"type": "string", "minLength": 1}
+        "checksum_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "documentation_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "license_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "methodology_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "manifest_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "exports_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "stale_dataset": {"type": "boolean"},
+        "score_notice": {"type": "string", "minLength": 20, "maxLength": 500}
       }
     },
-    "records": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "required": [
-          "id",
-          "country_code",
-          "country_name",
-          "city",
-          "hostname",
-          "ip",
-          "protocol",
-          "transport",
-          "port",
-          "speed_mbps",
-          "latency_ms",
-          "uptime_percent_7d",
-          "uptime_hours",
-          "sessions",
-          "technical_quality_score",
-          "score_label",
-          "last_checked_at",
-          "first_seen_at",
-          "config_updated_at",
-          "freshness_status",
-          "availability_status",
-          "source_name",
-          "source_url",
-          "server_page_url",
-          "config_download_url",
-          "risk_flags",
-          "config_sha256"
-        ],
-        "not": {"anyOf": [{"required": ["server_id"]}, {"required": ["legacy_id"]}]},
-        "properties": {
-          "id": {"type": "string", "pattern": "^pvl_[a-f0-9]{24}$"},
-          "country_code": {"type": ["string", "null"], "pattern": "^[A-Z]{2}$"},
-          "country_name": {"type": ["string", "null"]},
-          "city": {"type": ["string", "null"]},
-          "hostname": {"type": ["string", "null"]},
-          "ip": {"type": ["string", "null"]},
-          "protocol": {"const": "openvpn"},
-          "transport": {"enum": ["tcp", "udp"]},
-          "port": {"type": "integer", "minimum": 1, "maximum": 65535},
-          "speed_mbps": {"type": ["number", "null"], "minimum": 0},
-          "latency_ms": {"type": ["number", "null"], "minimum": 0},
-          "uptime_percent_7d": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
-          "uptime_hours": {"type": ["number", "null"], "minimum": 0},
-          "sessions": {"type": ["integer", "null"], "minimum": 0},
-          "technical_quality_score": {"type": "integer", "minimum": 0, "maximum": 100},
-          "score_label": {"type": "string"},
-          "last_checked_at": {"type": ["string", "null"], "format": "date-time"},
-          "first_seen_at": {"type": ["string", "null"], "format": "date-time"},
-          "config_updated_at": {"type": ["string", "null"], "format": "date-time"},
-          "freshness_status": {"enum": ["fresh", "recent"]},
-          "availability_status": {"const": "online_at_last_check"},
-          "source_name": {"type": "string"},
-          "source_url": {"type": "string", "format": "uri"},
-          "server_page_url": {"type": "string", "format": "uri"},
-          "config_download_url": {"type": ["string", "null"], "format": "uri"},
-          "risk_flags": {
-            "type": "array",
-            "items": {"type": "string"}
-          },
-          "config_sha256": {
-            "type": ["string", "null"],
-            "pattern": "^[a-f0-9]{64}$"
+    "Server": {
+      "$ref": "#/$defs/OpenVpnServer"
+    },
+    "OpenVpnServer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "country_code",
+        "country_name",
+        "city",
+        "hostname",
+        "ip",
+        "protocol",
+        "transport",
+        "port",
+        "speed_mbps",
+        "latency_ms",
+        "uptime_percent_7d",
+        "uptime_hours",
+        "sessions",
+        "technical_quality_score",
+        "score_label",
+        "last_checked_at",
+        "first_seen_at",
+        "config_updated_at",
+        "freshness_status",
+        "availability_status",
+        "source_name",
+        "source_url",
+        "server_page_url",
+        "config_download_url",
+        "risk_flags",
+        "config_sha256"
+      ],
+      "not": {
+        "anyOf": [
+          {"required": ["server_id"]},
+          {"required": ["legacy_id"]},
+          {"required": ["bitrix_id"]}
+        ]
+      },
+      "properties": {
+        "id": {"type": "string", "pattern": "^pvl_[a-f0-9]{24}$"},
+        "country_code": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Z]{2}$"
+        },
+        "country_name": {"type": ["string", "null"], "minLength": 1, "maxLength": 120},
+        "city": {"type": ["string", "null"], "minLength": 1, "maxLength": 120},
+        "hostname": {"$ref": "#/$defs/NullableHostname"},
+        "ip": {"$ref": "#/$defs/NullableIp"},
+        "protocol": {"const": "openvpn"},
+        "transport": {"enum": ["tcp", "udp"]},
+        "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "speed_mbps": {"$ref": "#/$defs/NullableNonNegativeNumber"},
+        "latency_ms": {"$ref": "#/$defs/NullableNonNegativeNumber"},
+        "jitter_ms": {"$ref": "#/$defs/NullableNonNegativeNumber"},
+        "packet_loss_percent": {"$ref": "#/$defs/NullablePercent"},
+        "upload_mbps": {"$ref": "#/$defs/NullableNonNegativeNumber"},
+        "uptime_percent_24h": {"$ref": "#/$defs/NullablePercent"},
+        "uptime_percent_7d": {"$ref": "#/$defs/NullablePercent"},
+        "uptime_percent_30d": {"$ref": "#/$defs/NullablePercent"},
+        "uptime_hours": {"$ref": "#/$defs/NullableNonNegativeNumber"},
+        "sessions": {"type": ["integer", "null"], "minimum": 0},
+        "technical_quality_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "score_label": {"type": "string", "minLength": 1, "maxLength": 40},
+        "last_checked_at": {"$ref": "#/$defs/NullableDateTime"},
+        "last_success_at": {"$ref": "#/$defs/NullableDateTime"},
+        "first_seen_at": {"$ref": "#/$defs/NullableDateTime"},
+        "config_updated_at": {"$ref": "#/$defs/NullableDateTime"},
+        "freshness_status": {"enum": ["fresh", "recent", "stale"]},
+        "availability_status": {
+          "enum": ["online_at_last_check", "offline_at_last_check", "unknown"]
+        },
+        "source_name": {"type": "string", "minLength": 1, "maxLength": 160},
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "source_license": {"type": ["string", "null"], "minLength": 1, "maxLength": 300},
+        "redistribution_allowed": {"type": "boolean"},
+        "server_page_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "config_download_url": {"$ref": "#/$defs/NullableUri"},
+        "risk_flags": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,63}$"
           }
+        },
+        "config_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
         }
+      }
+    },
+    "OpenVpnServerProjection": {
+      "description": "A fields-filtered API record; every included value retains its canonical field schema.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "id": {"$ref": "#/$defs/OpenVpnServer/properties/id"},
+        "country_code": {"$ref": "#/$defs/OpenVpnServer/properties/country_code"},
+        "country_name": {"$ref": "#/$defs/OpenVpnServer/properties/country_name"},
+        "city": {"$ref": "#/$defs/OpenVpnServer/properties/city"},
+        "hostname": {"$ref": "#/$defs/OpenVpnServer/properties/hostname"},
+        "ip": {"$ref": "#/$defs/OpenVpnServer/properties/ip"},
+        "protocol": {"$ref": "#/$defs/OpenVpnServer/properties/protocol"},
+        "transport": {"$ref": "#/$defs/OpenVpnServer/properties/transport"},
+        "port": {"$ref": "#/$defs/OpenVpnServer/properties/port"},
+        "speed_mbps": {"$ref": "#/$defs/OpenVpnServer/properties/speed_mbps"},
+        "latency_ms": {"$ref": "#/$defs/OpenVpnServer/properties/latency_ms"},
+        "jitter_ms": {"$ref": "#/$defs/OpenVpnServer/properties/jitter_ms"},
+        "packet_loss_percent": {
+          "$ref": "#/$defs/OpenVpnServer/properties/packet_loss_percent"
+        },
+        "upload_mbps": {"$ref": "#/$defs/OpenVpnServer/properties/upload_mbps"},
+        "uptime_percent_24h": {
+          "$ref": "#/$defs/OpenVpnServer/properties/uptime_percent_24h"
+        },
+        "uptime_percent_7d": {
+          "$ref": "#/$defs/OpenVpnServer/properties/uptime_percent_7d"
+        },
+        "uptime_percent_30d": {
+          "$ref": "#/$defs/OpenVpnServer/properties/uptime_percent_30d"
+        },
+        "uptime_hours": {"$ref": "#/$defs/OpenVpnServer/properties/uptime_hours"},
+        "sessions": {"$ref": "#/$defs/OpenVpnServer/properties/sessions"},
+        "technical_quality_score": {
+          "$ref": "#/$defs/OpenVpnServer/properties/technical_quality_score"
+        },
+        "score_label": {"$ref": "#/$defs/OpenVpnServer/properties/score_label"},
+        "last_checked_at": {
+          "$ref": "#/$defs/OpenVpnServer/properties/last_checked_at"
+        },
+        "last_success_at": {
+          "$ref": "#/$defs/OpenVpnServer/properties/last_success_at"
+        },
+        "first_seen_at": {"$ref": "#/$defs/OpenVpnServer/properties/first_seen_at"},
+        "config_updated_at": {
+          "$ref": "#/$defs/OpenVpnServer/properties/config_updated_at"
+        },
+        "freshness_status": {
+          "$ref": "#/$defs/OpenVpnServer/properties/freshness_status"
+        },
+        "availability_status": {
+          "$ref": "#/$defs/OpenVpnServer/properties/availability_status"
+        },
+        "source_name": {"$ref": "#/$defs/OpenVpnServer/properties/source_name"},
+        "source_url": {"$ref": "#/$defs/OpenVpnServer/properties/source_url"},
+        "source_license": {
+          "$ref": "#/$defs/OpenVpnServer/properties/source_license"
+        },
+        "redistribution_allowed": {
+          "$ref": "#/$defs/OpenVpnServer/properties/redistribution_allowed"
+        },
+        "server_page_url": {
+          "$ref": "#/$defs/OpenVpnServer/properties/server_page_url"
+        },
+        "config_download_url": {
+          "$ref": "#/$defs/OpenVpnServer/properties/config_download_url"
+        },
+        "risk_flags": {"$ref": "#/$defs/OpenVpnServer/properties/risk_flags"},
+        "config_sha256": {"$ref": "#/$defs/OpenVpnServer/properties/config_sha256"}
       }
     }
   }

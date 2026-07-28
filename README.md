@@ -1,29 +1,47 @@
-# PublicVPNList API and dataset tooling
+# PublicVPNList API and metadata tooling
 
-This is the official public repository for the schemas, examples and validation
-tooling used by the [PublicVPNList API](https://publicvpnlist.com/api/) and
-bulk export pipeline.
+This repository contains the public contract, schemas, client examples and
+offline validators for [PublicVPNList](https://publicvpnlist.com/). It is a
+**metadata dataset project**, not an archive of free VPN configurations.
 
-The listed VPN servers are operated by third parties. PublicVPNList checks
-technical reachability and measures speed, latency and freshness. It does not
-verify privacy, identity, ownership, logging practices, anonymity or operator
-trust. Endpoint state can change after a snapshot is published.
+No real endpoint snapshot is currently published here. The included records
+are synthetic and use documentation-only IP ranges. Real snapshots may be
+added only after source-by-source redistribution rights have been confirmed.
 
-## Download and API
+## What is included
 
-- API v1: https://publicvpnlist.com/api/
-- Canonical JSON, CSV, TXT and XML downloads: https://publicvpnlist.com/exports/
-- Methodology: https://publicvpnlist.com/methodology/
-- OpenAPI 3.1: [`openapi/openapi.json`](openapi/openapi.json)
-- Dataset schemas: [`schema/`](schema/)
-- Request examples: [`examples/`](examples/)
+- OpenAPI 3.1 contract for the seven API v1 endpoints:
+  [`openapi/openapi.json`](openapi/openapi.json)
+- Canonical OpenVPN snapshot, manifest and future WireGuard metadata schemas:
+  [`schema/`](schema/)
+- Synthetic OpenVPN and WireGuard fixtures: [`fixtures/`](fixtures/)
+- A typed, standard-library Python client and CLI: [`publicvpnlist/`](publicvpnlist/)
+  and [`tools/pvl_api.py`](tools/pvl_api.py)
+- Offline schema, semantic, checksum, CSV, ZIP and secret validation:
+  [`scripts/validate.py`](scripts/validate.py)
+- curl, Python, JavaScript and PHP examples: [`examples/`](examples/)
 - Postman and Bruno collections: [`collections/`](collections/)
-- Data dictionary and integration guide: [`docs/`](docs/)
 
-Check `generated_at`, `expires_at` and each `last_checked_at` before using a
-record obtained from the API or canonical exports.
+The canonical service currently offers JSON API responses and JSON, CSV, TXT
+and XML exports at <https://publicvpnlist.com/exports/>. Those live exports are
+not mirrored into this Git repository.
 
 ## Quick start
+
+Python 3.12 is the CI baseline. The API client itself uses only the standard
+library; repository validation uses pinned dependencies.
+
+```sh
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install --requirement requirements-dev.txt
+python scripts/validate.py
+python -m pytest
+python -m ruff check .
+python -m ruff format --check .
+```
+
+Query a small API page:
 
 ```sh
 python tools/pvl_api.py servers \
@@ -31,38 +49,102 @@ python tools/pvl_api.py servers \
   --param per_page=10
 ```
 
-The client uses only the Python standard library. Additional curl, Python, PHP
-and JavaScript examples are in [`examples/`](examples/). All fixture endpoint
-addresses are synthetic and non-routable.
+Use the typed client:
 
-## Validation
+```python
+from publicvpnlist import PublicVPNListClient
 
-```sh
-python -m pip install jsonschema==4.25.0
-python scripts/validate.py
-python -m unittest discover -s tests -v
+client = PublicVPNListClient(timeout=10, max_retries=2)
+for server in client.iter_servers(country="US", per_page=50):
+    print(server["id"], server["transport"], server["port"])
 ```
 
-CI validates the OpenAPI contract, JSON Schemas, synthetic fixtures, collections
-and secret patterns on pushes and pull requests.
+The client checks response content type, caps response size, retries only
+temporary failures a bounded number of times, handles non-2xx error envelopes
+and follows only pagination links under its configured API base URL. Tests use
+a mock transport and never contact production.
 
-## Repository scope
+## API and canonical model
 
-This initial publication intentionally contains no endpoint dataset, raw
-`.ovpn` profile or ZIP bundle. Source-by-source redistribution rights and a
-separate dataset license must be confirmed before data is mirrored to GitHub.
-Until then, use the canonical API and exports linked above.
+The public API base URL is `https://publicvpnlist.com/api/v1`. The OpenAPI
+contract documents:
 
-If dataset mirroring is approved later, snapshots will be validated before
-publication, updated only for meaningful changes and kept out of unbounded Git
-history. Immutable versions and large bundles will use GitHub Releases with an
-explicit retention policy.
+- `GET /servers`
+- `GET /servers/{public_id}`
+- `GET /countries`
+- `GET /protocols`
+- `GET /stats`
+- `GET /dataset`
+- `GET /health`
 
-## Reporting and takedown
+[`schema/servers.schema.json`](schema/servers.schema.json) is the canonical
+current `Server` model. OpenAPI references that definition instead of
+maintaining a separate copy. Existing API field names remain stable:
 
-Report an incorrect, unwanted or non-working listing through
-https://publicvpnlist.com/contacts/. Do not include credentials or private keys
-in an issue. Security reports should follow [SECURITY.md](SECURITY.md).
+`docs/openapi.json` is a generated byte-for-byte mirror for documentation
+hosting; CI rejects any divergence from the canonical contract.
 
-See [DATA-LICENSE.md](DATA-LICENSE.md), [ATTRIBUTION.md](ATTRIBUTION.md) and
-[CHANGELOG.md](CHANGELOG.md) before reusing data.
+| General term | Current API field |
+|---|---|
+| public ID | `id` |
+| endpoint host | `hostname` |
+| endpoint IP | `ip` |
+| endpoint port | `port` |
+| ping | `latency_ms` |
+| download throughput | `speed_mbps` |
+
+This mapping avoids duplicate aliases in responses. Breaking API changes
+require a new versioned path and migration note. Additive fields are recorded
+under `Unreleased` in [CHANGELOG.md](CHANGELOG.md).
+
+## Snapshot lifecycle and integrity
+
+Clients must inspect `generated_at`, `expires_at`, `next_update_at` and each
+record's `last_checked_at`. `fresh` means the record met the configured check
+window when that snapshot was built; it is not a promise of current
+availability. If repository snapshots are approved later, their refresh
+cadence will be declared in each manifest rather than implied here.
+
+To verify a future manifest entry:
+
+```sh
+sha256sum path/from/manifest
+```
+
+Compare the lowercase digest and byte size with that format's manifest entry.
+The validator also checks declared record/country/protocol counts, time
+ordering, unique IDs, file existence, byte sizes and checksums.
+
+Supported snapshot representations are configured in
+[`validation-policy.json`](validation-policy.json), not hard-coded into the
+manifest validator.
+
+## Interpreting measurements
+
+Speed, latency, jitter, packet loss, uptime, freshness and
+`technical_quality_score` describe technical observations. The score does not
+assess operator trust, privacy, identity, ownership, logging, anonymity or
+legal suitability. Endpoint state may change after publication.
+
+## WireGuard policy
+
+[`schema/wireguard-metadata.schema.json`](schema/wireguard-metadata.schema.json)
+prepares a separate metadata-only model for future WireGuard records. A server
+public key may be included only when its source permits redistribution; the
+validator requires valid base64 encoding that decodes to exactly 32 bytes.
+
+Public records never include a client private key, preshared key, complete
+client interface, provisioning token, assigned internal address, raw
+configuration, credential-bearing QR code, SSH access or checker-internal URL.
+
+## Licenses and reporting
+
+PublicVPNList-authored code, schemas, documentation and synthetic examples use
+the [MIT License](LICENSE). Dataset and upstream-source rights are separate;
+read [DATA-LICENSE.md](DATA-LICENSE.md) and
+[ATTRIBUTION.md](ATTRIBUTION.md) before reusing data.
+
+Report an incorrect or unwanted listing, request removal, or ask about source
+attribution through <https://publicvpnlist.com/contacts/>. Never include
+credentials or full profiles in a public issue. Security reports follow
+[SECURITY.md](SECURITY.md).

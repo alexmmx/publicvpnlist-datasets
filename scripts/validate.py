@@ -1,38 +1,37 @@
 #!/usr/bin/env python3
-import csv
-import hashlib
-import ipaddress
+"""Run all offline repository and optional snapshot checks."""
+
+from __future__ import annotations
+
 import json
 import re
 import sys
-import zipfile
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 from xml.etree import ElementTree
 
-import jsonschema
+import yaml
+from jsonschema import Draft202012Validator
+from openapi_spec_validator import validate_url
 
 ROOT = Path(__file__).resolve().parents[1]
-LATEST = ROOT / "latest"
-ID_RE = re.compile(r"^pvl_[a-f0-9]{24}$")
-SECRET_RE = re.compile(
-    rb"(BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY|gh[pousr]_[A-Za-z0-9]{20,}|"
-    rb"github_pat_[A-Za-z0-9_]{20,}|AKIA[A-Z0-9]{16})"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from publicvpnlist.security import scan_repository  # noqa: E402
+from publicvpnlist.validation import (  # noqa: E402
+    ValidationFailure,
+    ZipPolicy,
+    load_json,
+    validate_csv,
+    validate_dataset_semantics,
+    validate_manifest,
+    validate_openvpn_zip,
+    validate_schema,
+    validate_wireguard_semantics,
 )
 
-
-def fail(message: str) -> None:
-    raise SystemExit(message)
-
-
-server_schema = json.loads((ROOT / "schema" / "servers.schema.json").read_text(encoding="utf-8"))
-manifest_schema = json.loads((ROOT / "schema" / "manifest.schema.json").read_text(encoding="utf-8"))
-jsonschema.Draft202012Validator.check_schema(server_schema)
-jsonschema.Draft202012Validator.check_schema(manifest_schema)
-
-openapi_path = ROOT / "openapi" / "openapi.json"
-pages_openapi_path = ROOT / "docs" / "openapi.json"
-openapi = json.loads(openapi_path.read_text(encoding="utf-8"))
-required_paths = {
+REQUIRED_PATHS = {
     "/servers",
     "/servers/{public_id}",
     "/countries",
@@ -41,102 +40,262 @@ required_paths = {
     "/dataset",
     "/health",
 }
-if openapi.get("openapi") != "3.1.0":
-    fail("OpenAPI version mismatch")
-if set(openapi.get("paths", {})) != required_paths:
-    fail("OpenAPI endpoint set mismatch")
-if openapi_path.read_bytes() != pages_openapi_path.read_bytes():
-    fail("GitHub Pages OpenAPI copy is out of sync")
+MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+HTML_LINK_RE = re.compile(r"(?:href|src)=[\"']([^\"']+)[\"']", re.I)
 
-fixture = json.loads((ROOT / "fixtures" / "dataset.synthetic.json").read_text(encoding="utf-8"))
-jsonschema.validate(fixture, server_schema)
-for row in fixture["records"]:
-    if ipaddress.ip_address(row["ip"]).is_global:
-        fail("synthetic fixture contains a globally routable IP address")
 
-error_fixture = json.loads((ROOT / "fixtures" / "error.synthetic.json").read_text(encoding="utf-8"))
-jsonschema.validate(error_fixture, openapi["components"]["schemas"]["Error"])
+def fail(message: str) -> None:
+    raise ValidationFailure(message)
 
-postman = json.loads(
-    (ROOT / "collections" / "postman" / "PublicVPNList.postman_collection.json").read_text(encoding="utf-8")
-)
-if postman.get("info", {}).get("schema") != "https://schema.getpostman.com/json/collection/v2.1.0/collection.json":
-    fail("Postman collection schema mismatch")
 
-for path in ROOT.rglob("*"):
-    if any(part in {".git", ".venv", "__pycache__"} for part in path.parts):
-        continue
-    if path.is_file() and path.stat().st_size <= 64 * 1024 * 1024:
-        if SECRET_RE.search(path.read_bytes()):
-            fail(f"possible secret: {path.relative_to(ROOT)}")
+def validate_schemas() -> dict[str, dict]:
+    schemas: dict[str, dict] = {}
+    for path in sorted((ROOT / "schema").glob("*.schema.json")):
+        schema = load_json(path)
+        Draft202012Validator.check_schema(schema)
+        schemas[path.name] = schema
+    return schemas
 
-if not LATEST.exists():
-    print("validated OpenAPI, schemas, fixtures, collections and repository; endpoint dataset is not published")
-    raise SystemExit(0)
 
-payload = json.loads((LATEST / "servers.json").read_text(encoding="utf-8"))
-manifest = json.loads((LATEST / "manifest.json").read_text(encoding="utf-8"))
-jsonschema.validate(payload, server_schema)
-jsonschema.validate(manifest, manifest_schema)
-records = payload.get("records")
-meta = payload.get("metadata")
-if not isinstance(records, list) or not isinstance(meta, dict) or not records:
-    fail("dataset shape or empty-dataset guard failed")
-if meta.get("record_count") != len(records):
-    fail("record_count mismatch")
-if not re.fullmatch(r"\d{8}T\d{6}Z-[a-f0-9]{12}", str(meta.get("dataset_version", ""))):
-    fail("dataset_version failed")
-ids = [row.get("id") for row in records]
-if any(not isinstance(value, str) or not ID_RE.fullmatch(value) for value in ids):
-    fail("stable public ID failed")
-if len(ids) != len(set(ids)):
-    fail("duplicate public ID")
-if any("server_id" in row or "legacy_id" in row for row in records):
-    fail("internal ID leak")
+def validate_openapi(schemas: dict[str, dict]) -> dict:
+    path = ROOT / "openapi" / "openapi.json"
+    docs_copy = ROOT / "docs" / "openapi.json"
+    if path.read_bytes() != docs_copy.read_bytes():
+        fail("generated docs/openapi.json copy is out of sync")
+    contract = load_json(path)
+    if contract.get("openapi") != "3.1.0":
+        fail("OpenAPI version mismatch")
+    if set(contract.get("paths", {})) != REQUIRED_PATHS:
+        fail("OpenAPI endpoint set mismatch")
+    server_ref = contract["components"]["schemas"]["Server"].get("$ref")
+    if server_ref != "../schema/servers.schema.json#/$defs/OpenVpnServer":
+        fail("OpenAPI Server must reference the canonical JSON Schema")
+    canonical = schemas["servers.schema.json"]["$defs"]["OpenVpnServer"]
+    projection = schemas["servers.schema.json"]["$defs"]["OpenVpnServerProjection"]
+    if not canonical.get("required") or not canonical.get("properties"):
+        fail("canonical Server model is incomplete")
+    if set(projection.get("properties", {})) != set(canonical["properties"]):
+        fail("fields projection is out of sync with canonical Server fields")
+    projection_ref = contract["components"]["schemas"]["ServerListItem"].get("$ref")
+    if projection_ref != ("../schema/servers.schema.json#/$defs/OpenVpnServerProjection"):
+        fail("OpenAPI ServerListItem must reference the canonical projection")
+    validate_url(path.as_uri())
+    return contract
 
-with (LATEST / "servers.csv").open(newline="", encoding="utf-8") as handle:
-    csv_rows = list(csv.reader(handle))
-if len(csv_rows) != len(records) + 1:
-    fail("CSV row count failed")
-if any(value.startswith(("=", "+", "-", "@", "\t", "\r")) for row in csv_rows for value in row):
-    fail("CSV formula injection guard failed")
 
-ElementTree.parse(LATEST / "servers.xml")
+def validate_fixtures(
+    schemas: dict[str, dict],
+    contract: dict,
+    policy: dict,
+) -> None:
+    dataset = load_json(ROOT / "fixtures" / "dataset.synthetic.json")
+    validate_schema(dataset, schemas["servers.schema.json"], "synthetic dataset")
+    validate_dataset_semantics(dataset)
 
-checksums = {}
-for line in (LATEST / "checksums.txt").read_text(encoding="utf-8").splitlines():
-    digest, name = line.split("  ", 1)
-    checksums[name] = digest
-aliases = {
-    "openvpn-latest.json": LATEST / "servers.json",
-    "openvpn-latest.csv": LATEST / "servers.csv",
-    "openvpn-latest.txt": LATEST / "servers.txt",
-    "openvpn-latest.xml": LATEST / "servers.xml",
-    "openvpn-top-100.zip": ROOT / "configs" / "top-100.zip",
-}
-for name, digest in checksums.items():
-    path = aliases.get(name, LATEST / name)
-    if not path.exists():
-        fail(f"checksum target missing: {name}")
-    if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
-        fail(f"checksum mismatch: {name}")
+    wireguard = load_json(ROOT / "fixtures" / "wireguard.synthetic.json")
+    validate_schema(
+        wireguard,
+        schemas["wireguard-metadata.schema.json"],
+        "synthetic WireGuard metadata",
+    )
+    validate_wireguard_semantics(wireguard)
 
-zip_path = ROOT / "configs" / "top-100.zip"
-if zip_path.exists():
-    with zipfile.ZipFile(zip_path) as archive:
-        if sum(info.file_size for info in archive.infolist()) > 100 * 1024 * 1024:
-            fail("ZIP expanded-size limit failed")
-        for info in archive.infolist():
-            name = info.filename
-            if name.startswith(("/", "\\")) or ".." in Path(name).parts:
-                fail("ZIP path traversal failed")
-            if (info.external_attr >> 16) & 0o170000 == 0o120000:
-                fail("ZIP symlink failed")
+    manifest = load_json(ROOT / "fixtures" / "manifest.synthetic.json")
+    validate_schema(manifest, schemas["manifest.schema.json"], "synthetic manifest")
+    validate_manifest(
+        manifest,
+        ROOT / "fixtures",
+        set(policy["supported_snapshot_formats"]),
+    )
+    validate_csv(ROOT / "fixtures" / "servers.synthetic.csv", 1)
+    xml_text = (ROOT / "fixtures" / "servers.synthetic.xml").read_text(encoding="utf-8")
+    if "<!DOCTYPE" in xml_text.upper() or "<!ENTITY" in xml_text.upper():
+        fail("synthetic XML: DTD and entities are forbidden")
+    ElementTree.fromstring(xml_text)
 
-previous = ROOT / ".previous-record-count"
-if previous.exists():
-    old = int(previous.read_text().strip())
-    if old >= 100 and len(records) < int(old * 0.7):
-        fail(f"record count dropped more than 30%: {old} -> {len(records)}")
+    error = load_json(ROOT / "fixtures" / "error.synthetic.json")
+    validate_schema(error, contract["components"]["schemas"]["Error"], "synthetic error")
 
-print(f"validated {len(records)} records")
+
+def validate_collections(contract: dict) -> None:
+    postman = load_json(
+        ROOT / "collections" / "postman" / "PublicVPNList.postman_collection.json",
+    )
+    if postman.get("info", {}).get("schema") != (
+        "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    ):
+        fail("Postman collection schema mismatch")
+    raw_urls = {
+        item.get("request", {}).get("url", {}).get("raw") for item in postman.get("item", [])
+    }
+    for endpoint in contract["paths"]:
+        sample = endpoint.replace("/{public_id}", "/{{publicId}}")
+        if not any(isinstance(url, str) and sample in url for url in raw_urls):
+            fail(f"Postman collection misses {endpoint}")
+    bruno_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((ROOT / "collections" / "bruno" / "requests").glob("*.bru"))
+    )
+    for endpoint in contract["paths"]:
+        sample = endpoint.replace("/{public_id}", "/{{public_id}}")
+        if sample not in bruno_text:
+            fail(f"Bruno collection misses {endpoint}")
+
+
+def validate_yaml() -> None:
+    for path in sorted(ROOT.rglob("*.yml")) + sorted(ROOT.rglob("*.yaml")):
+        if ".git" in path.parts:
+            continue
+        with path.open(encoding="utf-8") as handle:
+            list(yaml.safe_load_all(handle))
+
+
+def validate_repository_formats() -> None:
+    for path in sorted(ROOT.rglob("*.json")):
+        if ".git" not in path.parts:
+            json.loads(path.read_text(encoding="utf-8"))
+    for path in sorted(ROOT.rglob("*.csv")):
+        if ".git" not in path.parts:
+            validate_csv(path)
+    for path in sorted(ROOT.rglob("*.xml")):
+        if ".git" in path.parts:
+            continue
+        text = path.read_text(encoding="utf-8")
+        if "<!DOCTYPE" in text.upper() or "<!ENTITY" in text.upper():
+            fail(f"{path.relative_to(ROOT)}: DTD and entities are forbidden")
+        ElementTree.fromstring(text)
+    for suffix in ("*.txt", "*.md"):
+        for path in sorted(ROOT.rglob(suffix)):
+            if ".git" not in path.parts:
+                path.read_text(encoding="utf-8")
+
+
+def validate_repository_archives(policy: dict) -> None:
+    zip_policy = ZipPolicy(
+        max_archive_bytes=policy["maximum_archive_bytes"],
+        max_files=policy["maximum_archive_files"],
+        max_expanded_bytes=policy["maximum_expanded_bytes"],
+        max_ratio=policy["maximum_compression_ratio"],
+        max_name_length=policy["maximum_archive_name_length"],
+        allowed_extensions=tuple(policy["allowed_archive_extensions"]),
+    )
+    for path in sorted(ROOT.rglob("*.zip")):
+        if ".git" in path.parts:
+            continue
+        validate_openvpn_zip(
+            path,
+            policy=zip_policy,
+            allow_documentation_addresses="fixtures" in path.parts,
+        )
+
+
+def validate_markdown_links() -> None:
+    failures: list[str] = []
+    paths = sorted(ROOT.rglob("*.md")) + sorted(ROOT.rglob("*.html"))
+    for path in paths:
+        if ".git" in path.parts:
+            continue
+        text = path.read_text(encoding="utf-8")
+        targets = MARKDOWN_LINK_RE.findall(text) + HTML_LINK_RE.findall(text)
+        for raw_target in targets:
+            target = raw_target.strip().split(maxsplit=1)[0].strip("<>")
+            parsed = urlsplit(target)
+            if parsed.scheme or target.startswith(("#", "mailto:")):
+                continue
+            relative = unquote(parsed.path)
+            candidate = (path.parent / relative).resolve()
+            try:
+                candidate.relative_to(ROOT.resolve())
+            except ValueError:
+                failures.append(f"{path.relative_to(ROOT)}: link escapes repository")
+                continue
+            if not candidate.exists():
+                failures.append(
+                    f"{path.relative_to(ROOT)}: missing link target {relative}",
+                )
+    if failures:
+        fail("Markdown link validation:\n" + "\n".join(failures))
+
+
+def validate_repository_secrets() -> None:
+    findings = scan_repository(
+        ROOT,
+        allowlist_path=ROOT / "secret-scan-allowlist.json",
+    )
+    if findings:
+        rendered = "\n".join(
+            f"{finding.path}:{finding.line}: {finding.rule}" for finding in findings
+        )
+        fail("possible secret or credential material:\n" + rendered)
+
+
+def validate_optional_snapshot(
+    schemas: dict[str, dict],
+    policy: dict,
+) -> int:
+    latest = ROOT / "latest"
+    if not latest.exists():
+        return 0
+    manifest = load_json(latest / "manifest.json")
+    validate_schema(manifest, schemas["manifest.schema.json"], "latest manifest")
+    supported_formats = set(policy["supported_snapshot_formats"])
+    validate_manifest(
+        manifest,
+        latest,
+        supported_formats,
+    )
+    format_paths = {item["format"]: latest / item["path"] for item in manifest["formats"]}
+    canonical_format = policy["canonical_dataset_format"]
+    if canonical_format not in format_paths:
+        fail("snapshot is missing the configured canonical representation")
+    if canonical_format != "json":
+        fail("semantic parsing for the configured canonical format is not implemented")
+    payload = load_json(format_paths[canonical_format])
+    validate_schema(payload, schemas["servers.schema.json"], "latest dataset")
+    validate_dataset_semantics(payload)
+    if "csv" in format_paths:
+        validate_csv(format_paths["csv"], len(payload["records"]))
+    if "xml" in format_paths:
+        xml_text = format_paths["xml"].read_text(encoding="utf-8")
+        if "<!DOCTYPE" in xml_text.upper() or "<!ENTITY" in xml_text.upper():
+            fail("snapshot XML: DTD and entities are forbidden")
+        ElementTree.fromstring(xml_text)
+    if "txt" in format_paths:
+        format_paths["txt"].read_text(encoding="utf-8")
+
+    previous = ROOT / ".previous-record-count"
+    if previous.exists():
+        old = int(previous.read_text(encoding="ascii").strip())
+        current = len(payload["records"])
+        if old >= 100 and current < int(old * 0.7):
+            fail(f"record count dropped more than 30%: {old} -> {current}")
+    return len(payload["records"])
+
+
+def main() -> int:
+    try:
+        policy = load_json(ROOT / "validation-policy.json")
+        schemas = validate_schemas()
+        contract = validate_openapi(schemas)
+        validate_fixtures(schemas, contract, policy)
+        validate_collections(contract)
+        validate_yaml()
+        validate_repository_formats()
+        validate_repository_archives(policy)
+        validate_markdown_links()
+        validate_repository_secrets()
+        count = validate_optional_snapshot(schemas, policy)
+    except (ValidationFailure, KeyError, OSError, ValueError) as error:
+        print(str(error), file=sys.stderr)
+        return 1
+    if count:
+        print(f"validated repository and {count} snapshot records")
+    else:
+        print(
+            "validated repository; only schemas and synthetic metadata fixtures are published",
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

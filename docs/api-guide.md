@@ -35,6 +35,24 @@ and retry with bounded exponential backoff. Do not retry validation errors
 without changing the request.
 
 Error responses include a stable `error.code` and `error.request_id`.
+They never include stack traces, SQL, Bitrix IDs, filesystem paths or
+infrastructure hostnames.
+
+The maintained standard-library client applies a 15-second timeout, a 4 MiB
+response cap and at most two retries for `429`, `502`, `503` or `504`:
+
+```python
+from publicvpnlist import PublicVPNListClient
+
+client = PublicVPNListClient(timeout=10, max_response_bytes=2 * 1024 * 1024)
+for server in client.iter_servers(country="US", per_page=50):
+    print(server["id"])
+```
+
+Pass a requests-compatible object as `session=my_session`, or a custom object
+implementing the documented `Transport` protocol, when the application owns
+connection pooling. The test suite uses these interfaces to exercise all HTTP
+behavior without network access.
 
 ## Select only required fields
 
@@ -45,6 +63,10 @@ fields=id,country_code,transport,port,speed_mbps,latency_ms,last_checked_at
 ```
 
 Unknown fields and repeated query parameters are rejected.
+
+The canonical response uses established API names (`id`, `hostname`, `ip`,
+`port`, `latency_ms` and `speed_mbps`). Protocol-neutral names in design
+documents map to these fields; both aliases are not emitted together.
 
 ## Treat measurements correctly
 

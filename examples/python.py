@@ -1,9 +1,4 @@
-import requests
+from publicvpnlist import PublicVPNListClient
 
-response = requests.get(
-    "https://publicvpnlist.com/api/v1/servers",
-    params={"country": "US", "per_page": 10},
-    timeout=15,
-)
-response.raise_for_status()
-print(response.json()["data"])
+client = PublicVPNListClient(timeout=15, max_retries=2)
+print(client.list_servers(country="US", per_page=10)["data"])

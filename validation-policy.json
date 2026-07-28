@@ -1,0 +1,10 @@
+{
+  "supported_snapshot_formats": ["json", "csv", "txt", "xml"],
+  "canonical_dataset_format": "json",
+  "maximum_archive_bytes": 10485760,
+  "maximum_archive_files": 1,
+  "maximum_expanded_bytes": 2097152,
+  "maximum_compression_ratio": 100,
+  "maximum_archive_name_length": 180,
+  "allowed_archive_extensions": [".ovpn"]
+}

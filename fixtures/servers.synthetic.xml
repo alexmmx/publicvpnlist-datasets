@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<servers synthetic="true">
+  <server id="pvl_000000000000000000000001">
+    <protocol>openvpn</protocol>
+    <transport>udp</transport>
+    <ip>192.0.2.10</ip>
+    <port>1194</port>
+    <country_code>US</country_code>
+  </server>
+</servers>

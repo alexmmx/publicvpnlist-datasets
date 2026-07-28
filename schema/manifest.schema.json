@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://publicvpnlist.com/schema/manifest-1.0.json",
-  "title": "PublicVPNList export manifest",
+  "title": "PublicVPNList snapshot manifest",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "schema_version",
     "dataset_version",
@@ -12,8 +13,6 @@
     "record_count",
     "score_notice",
     "formats",
-    "config_bundle",
-    "archive_policy",
     "license_review"
   ],
   "properties": {
@@ -22,54 +21,81 @@
       "type": "string",
       "pattern": "^\\d{8}T\\d{6}Z-[a-f0-9]{12}$"
     },
-    "snapshot_id": {"type": "string", "minLength": 1},
+    "snapshot_id": {"type": "string", "minLength": 1, "maxLength": 128},
     "generated_at": {"type": "string", "format": "date-time"},
     "expires_at": {"type": "string", "format": "date-time"},
     "record_count": {"type": "integer", "minimum": 1},
-    "score_notice": {"type": "string", "minLength": 1},
+    "score_notice": {"type": "string", "minLength": 20, "maxLength": 500},
     "formats": {
       "type": "array",
-      "minItems": 4,
-      "items": {
-        "type": "object",
-        "required": ["format", "url", "bytes", "sha256"],
-        "properties": {
-          "format": {"enum": ["json", "csv", "txt", "xml"]},
-          "url": {"type": "string", "format": "uri"},
-          "bytes": {"type": "integer", "minimum": 1},
-          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-          "versioned_url": {"type": "string", "format": "uri"},
-          "latest_archived_url": {"type": "string", "format": "uri"}
-        }
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/FormatEntry"}
+    },
+    "config_bundle": {"$ref": "#/$defs/LegacyConfigBundle"},
+    "archive_policy": {"$ref": "#/$defs/LegacyArchivePolicy"},
+    "license_review": {"type": "string", "minLength": 20, "maxLength": 1000}
+  },
+  "$defs": {
+    "FormatEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "bytes", "sha256"],
+      "anyOf": [
+        {"required": ["path"]},
+        {"required": ["url"]}
+      ],
+      "properties": {
+        "format": {"enum": ["json", "csv", "txt", "xml"]},
+        "path": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,179}$"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "versioned_url": {"type": "string", "format": "uri", "maxLength": 2048},
+        "latest_archived_url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        },
+        "bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
       }
     },
-    "config_bundle": {
+    "LegacyConfigBundle": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["url", "config_count", "bytes", "sha256", "status"],
       "properties": {
-        "url": {"type": "string", "format": "uri"},
+        "url": {"type": "string", "format": "uri", "maxLength": 2048},
         "config_count": {"type": "integer", "minimum": 0},
         "bytes": {"type": "integer", "minimum": 1},
         "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "status": {"type": "string"},
-        "versioned_url": {"type": "string", "format": "uri"},
-        "latest_archived_url": {"type": "string", "format": "uri"}
+        "status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "versioned_url": {"type": "string", "format": "uri", "maxLength": 2048},
+        "latest_archived_url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        }
       }
     },
-    "archive_policy": {
+    "LegacyArchivePolicy": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["cadence", "interval_seconds", "retention_days"],
       "properties": {
-        "cadence": {"type": "string"},
+        "cadence": {"type": "string", "minLength": 1, "maxLength": 120},
         "interval_seconds": {"type": "integer", "minimum": 1},
         "retention_days": {"type": "integer", "minimum": 1},
         "current_snapshot_archived": {"type": "boolean"},
-        "latest_archived_version": {"type": ["string", "null"]}
+        "latest_archived_version": {"type": ["string", "null"], "maxLength": 128}
       }
-    },
-    "license_review": {
-      "type": "string",
-      "minLength": 1
     }
   }
 }

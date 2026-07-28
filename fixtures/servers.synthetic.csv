@@ -1,0 +1,2 @@
+id,country_code,hostname,ip,protocol,transport,port,speed_mbps,latency_ms,last_checked_at
+pvl_000000000000000000000001,US,vpn.example.invalid,192.0.2.10,openvpn,udp,1194,100.5,25.25,2026-07-27T23:59:00Z

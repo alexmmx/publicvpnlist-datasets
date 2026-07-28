@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
-"""Small dependency-free PublicVPNList API client."""
+"""Command-line wrapper for the bounded PublicVPNList client."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from pathlib import Path
 
-BASE_URL = "https://publicvpnlist.com/api/v1"
-ENDPOINTS = {"servers", "countries", "protocols", "stats", "dataset", "health"}
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from publicvpnlist.client import (  # noqa: E402
+    ClientError,
+    NotModified,
+    PublicVPNListClient,
+)
+
+ENDPOINTS = {"countries", "dataset", "health", "protocols", "servers", "stats"}
 
 
 def parse_param(value: str) -> tuple[str, str]:
@@ -25,9 +32,13 @@ def parse_param(value: str) -> tuple[str, str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Fetch a PublicVPNList API v1 response.",
+        description="Fetch a PublicVPNList API v1 JSON response.",
     )
     parser.add_argument("endpoint", choices=sorted(ENDPOINTS))
+    parser.add_argument(
+        "--public-id",
+        help="get one server; valid only with the servers endpoint",
+    )
     parser.add_argument(
         "--param",
         action="append",
@@ -36,37 +47,31 @@ def main() -> int:
         metavar="KEY=VALUE",
         help="query parameter; may be repeated",
     )
-    parser.add_argument("--if-none-match", help="send an ETag from an earlier response")
+    parser.add_argument("--if-none-match", help="send a previously returned ETag")
     parser.add_argument("--timeout", type=float, default=15.0)
+    parser.add_argument("--max-response-bytes", type=int, default=4 * 1024 * 1024)
+    parser.add_argument("--max-retries", type=int, default=2)
     parser.add_argument("--compact", action="store_true", help="do not pretty-print JSON")
     args = parser.parse_args()
 
-    query = urlencode(args.param)
-    url = f"{BASE_URL}/{args.endpoint}" + (f"?{query}" if query else "")
-    headers = {
-        "Accept": "application/json",
-        "User-Agent": "publicvpnlist-datasets-example/1.0",
-    }
-    if args.if_none_match:
-        headers["If-None-Match"] = args.if_none_match
-
+    if args.public_id and args.endpoint != "servers":
+        parser.error("--public-id is valid only for servers")
+    client = PublicVPNListClient(
+        timeout=args.timeout,
+        max_response_bytes=args.max_response_bytes,
+        max_retries=args.max_retries,
+    )
+    path = f"/servers/{args.public_id}" if args.public_id else f"/{args.endpoint}"
     try:
-        with urlopen(Request(url, headers=headers), timeout=args.timeout) as response:
-            payload = json.load(response)
-            etag = response.headers.get("ETag")
-            if etag:
-                print(f"ETag: {etag}", file=sys.stderr)
-    except HTTPError as error:
-        if error.code == 304:
-            print("Not modified", file=sys.stderr)
-            return 0
-        body = error.read().decode("utf-8", errors="replace")
-        retry_after = error.headers.get("Retry-After")
-        if retry_after:
-            print(f"Retry-After: {retry_after}", file=sys.stderr)
-        print(f"HTTP {error.code}: {body}", file=sys.stderr)
-        return 2
-    except (URLError, TimeoutError, json.JSONDecodeError) as error:
+        payload = client.get(
+            path,
+            params=dict(args.param),
+            etag=args.if_none_match,
+        )
+    except NotModified:
+        print("Not modified", file=sys.stderr)
+        return 0
+    except (ClientError, ValueError) as error:
         print(f"Request failed: {error}", file=sys.stderr)
         return 2
 

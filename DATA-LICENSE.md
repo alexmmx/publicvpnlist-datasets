@@ -1,14 +1,29 @@
-# Dataset publication status
+# Data publication and licensing
 
-No endpoint dataset or VPN configuration is published in this repository.
-Canonical API and export responses remain subject to the PublicVPNList terms
-and each upstream source's terms:
-https://publicvpnlist.com/license/.
+The [MIT license](LICENSE) applies to PublicVPNList-authored source code,
+schemas, documentation and synthetic examples. It does **not** automatically
+grant permission to use or redistribute metadata or configuration material
+obtained from third-party VPN sources.
 
-PublicVPNList-authored technical measurements and schema descriptions are kept
-separate from third-party endpoint metadata and configuration files. Raw
-`.ovpn` profiles are excluded until redistribution permission is confirmed for
-each source.
+No real endpoint snapshot is currently published in this repository. Before a
+future snapshot can be included, every record must identify its source,
+applicable source license or permission, required attribution and whether
+redistribution is explicitly allowed. Records without confirmed republication
+rights must be excluded. The source review is tracked in
+[ATTRIBUTION.md](ATTRIBUTION.md).
 
-Before any dataset is added here, record the chosen data license, preserve
-required attribution and document every included or excluded source.
+Public metadata snapshots never include ready-to-use OpenVPN `.ovpn` profiles,
+WireGuard client `.conf` profiles, client private keys, preshared keys,
+passwords, access or provisioning tokens, QR codes containing profiles, or
+internal service endpoints. A configuration download link is permitted only
+where the source explicitly allows redistribution and that permission is
+recorded.
+
+Technical reachability, latency, throughput, uptime and quality-score
+measurements are observations at a point in time. They are not a guarantee of
+security, confidentiality, operator identity, privacy practices or absence of
+logging.
+
+The canonical service may be governed by additional current terms published at
+<https://publicvpnlist.com/license/>. This document records the repository
+publication gate and is not legal advice.

@@ -1,12 +1,38 @@
 # Changelog
 
-## 2026-07-28
+All notable changes to this project are documented in this file.
 
-- Published API schema 1.0, examples and validation tooling.
-- Added the OpenAPI 3.1 contract, data dictionary, integration guide, Postman
-  and Bruno collections, synthetic fixtures, a dependency-free CLI and
-  contract tests.
-- Added push and weekly CI validation with read-only permissions.
-- Added validation for schema integrity, secrets and optional future JSON, CSV,
-  XML, checksum, stable-ID, ZIP and record-count checks.
-- Excluded endpoint datasets and OpenVPN configurations pending license review.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and the project follows semantic versioning for its API and schema contracts.
+
+## Unreleased
+
+### Added
+
+- Strict Draft 2020-12 schemas and a metadata-only WireGuard model.
+- Offline semantic, manifest, CSV, ZIP and credential-leak validation.
+- Positive and negative contract, security and mock-client tests.
+- Reproducible dependency pins and Python lint/format checks.
+
+### Changed
+
+- Made the canonical JSON Schema the OpenAPI `Server` source of truth.
+- Completed typed OpenAPI responses, errors, parameters, examples and cache
+  behavior for all seven public endpoints.
+- Replaced the indeterminate code license with MIT while retaining a separate
+  data-rights publication gate.
+- Hardened the Python client with bounded responses, retries and pagination.
+
+### Security
+
+- Added checks for path traversal, Unicode archive names, symlinks, encrypted
+  and duplicate ZIP entries, compression bombs and embedded VPN credentials.
+- Added Unicode-aware CSV formula-injection rejection.
+
+## 1.0.0 - 2026-07-28
+
+### Added
+
+- Initial API schema, examples, collections, synthetic fixtures and validation
+  tooling.
+- Read-only push and scheduled repository validation.

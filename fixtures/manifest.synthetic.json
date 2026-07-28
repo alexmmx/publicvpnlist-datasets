@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "dataset_version": "20260728T000000Z-000000000000",
+  "snapshot_id": "synthetic-example",
+  "generated_at": "2026-07-28T00:00:00Z",
+  "expires_at": "2026-07-28T00:15:00Z",
+  "record_count": 1,
+  "score_notice": "Technical quality score is not a privacy, identity or trust assessment.",
+  "formats": [
+    {
+      "format": "json",
+      "path": "dataset.synthetic.json",
+      "bytes": 2241,
+      "sha256": "46a04726d816fd0f36dfd2579ae190e25b136c962ae2ca2e7c45dfc745ed9b1f"
+    },
+    {
+      "format": "csv",
+      "path": "servers.synthetic.csv",
+      "bytes": 203,
+      "sha256": "bccbd562125da8abbcffd265f832e3611487ab2e62dfe4bd251b5fba2228e040"
+    },
+    {
+      "format": "txt",
+      "path": "servers.synthetic.txt",
+      "bytes": 78,
+      "sha256": "e16006094681fbf89b6ebb4123aa7a5ccff9fa32c023b6ccd6a889abd80bd780"
+    },
+    {
+      "format": "xml",
+      "path": "servers.synthetic.xml",
+      "bytes": 280,
+      "sha256": "a30effc80496894775d49641826ef334bd6b5c777e0b35d46b811d50a9ebb1f9"
+    }
+  ],
+  "license_review": "Synthetic documentation fixture only; it contains no third-party endpoint data or configuration."
+}

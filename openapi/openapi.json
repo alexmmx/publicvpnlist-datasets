@@ -3,91 +3,781 @@
   "info": {
     "title": "PublicVPNList API",
     "version": "1.0.0",
-    "description": "Technically checked metadata for third-party public OpenVPN endpoints. Technical checks do not assess privacy, identity or operator trust.",
+    "description": "Technically checked metadata for third-party public OpenVPN endpoints. The API does not publish credentials and does not assess privacy, identity, logging policy or operator trust.",
     "termsOfService": "https://publicvpnlist.com/license/",
     "license": {
       "name": "PublicVPNList data terms",
       "url": "https://publicvpnlist.com/license/"
     }
   },
-  "servers": [{"url": "https://publicvpnlist.com/api/v1"}],
+  "servers": [
+    {
+      "url": "https://publicvpnlist.com/api/v1",
+      "description": "Public API v1"
+    }
+  ],
+  "tags": [
+    {"name": "Servers", "description": "Checked endpoint metadata"},
+    {"name": "Catalog", "description": "Catalog dimensions and lifecycle"},
+    {"name": "Operations", "description": "Read-only health information"}
+  ],
   "paths": {
     "/servers": {
       "get": {
+        "operationId": "listServers",
+        "tags": ["Servers"],
         "summary": "List OpenVPN server records",
+        "description": "Returns a filtered page. Responses are cacheable and expose ETag, Last-Modified and Cache-Control. When fields is used, each item contains only the requested public fields.",
         "parameters": [
-          {"name":"country","in":"query","schema":{"type":"string","pattern":"^[A-Z]{2}$"}},
-          {"name":"protocol","in":"query","schema":{"type":"string","enum":["openvpn"]}},
-          {"name":"transport","in":"query","schema":{"type":"string","enum":["tcp","udp"]}},
-          {"name":"port","in":"query","schema":{"type":"integer","minimum":1,"maximum":65535}},
-          {"name":"fresh_within","in":"query","schema":{"type":"integer","minimum":1,"maximum":259200}},
-          {"name":"min_speed","in":"query","schema":{"type":"number","minimum":0}},
-          {"name":"max_latency","in":"query","schema":{"type":"number","minimum":0}},
-          {"name":"min_uptime","in":"query","schema":{"type":"number","minimum":0,"maximum":100}},
-          {"name":"status","in":"query","schema":{"type":"string","enum":["online"]}},
-          {"name":"sort","in":"query","schema":{"type":"string","enum":["speed","latency","uptime","last_checked","score","first_seen"]}},
-          {"name":"order","in":"query","schema":{"type":"string","enum":["asc","desc"]}},
-          {"name":"page","in":"query","schema":{"type":"integer","minimum":1}},
-          {"name":"per_page","in":"query","schema":{"type":"integer","minimum":1,"maximum":200}},
-          {"name":"fields","in":"query","schema":{"type":"string"}},
-          {"name":"format","in":"query","schema":{"type":"string","enum":["json"]}}
+          {"$ref": "#/components/parameters/Country"},
+          {"$ref": "#/components/parameters/Protocol"},
+          {"$ref": "#/components/parameters/Transport"},
+          {"$ref": "#/components/parameters/Port"},
+          {"$ref": "#/components/parameters/FreshWithin"},
+          {"$ref": "#/components/parameters/MinSpeed"},
+          {"$ref": "#/components/parameters/MaxLatency"},
+          {"$ref": "#/components/parameters/MinUptime"},
+          {"$ref": "#/components/parameters/Status"},
+          {"$ref": "#/components/parameters/Sort"},
+          {"$ref": "#/components/parameters/Order"},
+          {"$ref": "#/components/parameters/Page"},
+          {"$ref": "#/components/parameters/PerPage"},
+          {"$ref": "#/components/parameters/Fields"},
+          {"$ref": "#/components/parameters/Format"},
+          {"$ref": "#/components/parameters/IfNoneMatch"},
+          {"$ref": "#/components/parameters/IfModifiedSince"}
         ],
         "responses": {
-          "200":{"description":"Paginated records","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ListResponse"}}}},
-          "400":{"$ref":"#/components/responses/Error"},
-          "429":{"$ref":"#/components/responses/Error"},
-          "500":{"$ref":"#/components/responses/Error"}
+          "200": {
+            "description": "Paginated server records",
+            "headers": {
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Last-Modified": {"$ref": "#/components/headers/LastModified"},
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"}
+            },
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ServerListResponse"},
+                "examples": {
+                  "page": {
+                    "summary": "One synthetic record",
+                    "value": {
+                      "data": [
+                        {
+                          "id": "pvl_000000000000000000000001",
+                          "country_code": "US",
+                          "country_name": "Synthetic example",
+                          "city": null,
+                          "hostname": "vpn.example.invalid",
+                          "ip": "192.0.2.10",
+                          "protocol": "openvpn",
+                          "transport": "udp",
+                          "port": 1194,
+                          "speed_mbps": 100.5,
+                          "latency_ms": 25.25,
+                          "uptime_percent_7d": null,
+                          "uptime_hours": null,
+                          "sessions": null,
+                          "technical_quality_score": 80,
+                          "score_label": "Good",
+                          "last_checked_at": "2026-07-27T23:59:00Z",
+                          "first_seen_at": "2026-07-01T00:00:00Z",
+                          "config_updated_at": null,
+                          "freshness_status": "fresh",
+                          "availability_status": "online_at_last_check",
+                          "source_name": "Synthetic fixture",
+                          "source_url": "https://example.invalid/source",
+                          "server_page_url": "https://example.invalid/servers/pvl_000000000000000000000001",
+                          "config_download_url": null,
+                          "risk_flags": ["third_party_server", "privacy_not_assessed"],
+                          "config_sha256": null
+                        }
+                      ],
+                      "meta": {
+                        "schema_version": "1.0",
+                        "dataset_version": "20260728T000000Z-000000000000",
+                        "snapshot_id": "synthetic-example",
+                        "generated_at": "2026-07-28T00:00:00Z",
+                        "expires_at": "2026-07-28T00:15:00Z",
+                        "total": 1,
+                        "page": 1,
+                        "per_page": 50,
+                        "pages": 1
+                      },
+                      "links": {
+                        "self": "https://example.invalid/api/v1/servers?page=1",
+                        "next": null,
+                        "prev": null,
+                        "documentation": "https://publicvpnlist.com/api/"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {"$ref": "#/components/responses/NotModified"},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "429": {"$ref": "#/components/responses/TooManyRequests"},
+          "500": {"$ref": "#/components/responses/InternalError"}
         }
-      },
-      "head":{"responses":{"200":{"description":"Headers for the current representation"}}},
-      "options":{"responses":{"204":{"description":"CORS preflight"}}}
+      }
     },
     "/servers/{public_id}": {
       "get": {
-        "summary":"Get one server record",
-        "parameters":[{"name":"public_id","in":"path","required":true,"schema":{"type":"string","pattern":"^pvl_[a-f0-9]{24}$"}}],
-        "responses":{"200":{"description":"Server record"},"404":{"$ref":"#/components/responses/Error"}}
+        "operationId": "getServer",
+        "tags": ["Servers"],
+        "summary": "Get one server record",
+        "parameters": [
+          {"$ref": "#/components/parameters/PublicId"},
+          {"$ref": "#/components/parameters/IfNoneMatch"},
+          {"$ref": "#/components/parameters/IfModifiedSince"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Server record",
+            "headers": {
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Last-Modified": {"$ref": "#/components/headers/LastModified"},
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"}
+            },
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ServerResponse"}
+              }
+            }
+          },
+          "304": {"$ref": "#/components/responses/NotModified"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "429": {"$ref": "#/components/responses/TooManyRequests"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
       }
     },
-    "/countries":{"get":{"summary":"List countries","responses":{"200":{"description":"Country list"}}}},
-    "/protocols":{"get":{"summary":"List protocols","responses":{"200":{"description":"Protocol list"}}}},
-    "/stats":{"get":{"summary":"Get dataset counters","responses":{"200":{"description":"Dataset counters"}}}},
-    "/dataset":{"get":{"summary":"Get dataset lifecycle metadata","responses":{"200":{"description":"Dataset metadata"}}}},
-    "/health":{"get":{"summary":"Get lightweight snapshot health","responses":{"200":{"description":"Snapshot health"},"429":{"$ref":"#/components/responses/Error"}}}}
+    "/countries": {
+      "get": {
+        "operationId": "listCountries",
+        "tags": ["Catalog"],
+        "summary": "List represented countries",
+        "parameters": [
+          {"$ref": "#/components/parameters/IfNoneMatch"},
+          {"$ref": "#/components/parameters/IfModifiedSince"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Country list",
+            "headers": {
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Last-Modified": {"$ref": "#/components/headers/LastModified"},
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"}
+            },
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CountryListResponse"},
+                "example": {
+                  "data": [
+                    {
+                      "country_code": "US",
+                      "country_name": "Synthetic example",
+                      "record_count": 1
+                    }
+                  ],
+                  "meta": {
+                    "schema_version": "1.0",
+                    "dataset_version": "20260728T000000Z-000000000000",
+                    "snapshot_id": "synthetic-example",
+                    "generated_at": "2026-07-28T00:00:00Z",
+                    "expires_at": "2026-07-28T00:15:00Z",
+                    "total": 1
+                  },
+                  "links": {
+                    "self": "https://example.invalid/api/v1/countries",
+                    "documentation": "https://publicvpnlist.com/api/"
+                  }
+                }
+              }
+            }
+          },
+          "304": {"$ref": "#/components/responses/NotModified"},
+          "429": {"$ref": "#/components/responses/TooManyRequests"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/protocols": {
+      "get": {
+        "operationId": "listProtocols",
+        "tags": ["Catalog"],
+        "summary": "List supported protocols",
+        "parameters": [
+          {"$ref": "#/components/parameters/IfNoneMatch"},
+          {"$ref": "#/components/parameters/IfModifiedSince"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Protocol list",
+            "headers": {
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Last-Modified": {"$ref": "#/components/headers/LastModified"},
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"}
+            },
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ProtocolListResponse"},
+                "example": {
+                  "data": [
+                    {
+                      "protocol": "openvpn",
+                      "transports": ["tcp", "udp"],
+                      "record_count": 1
+                    }
+                  ],
+                  "meta": {
+                    "schema_version": "1.0",
+                    "dataset_version": "20260728T000000Z-000000000000",
+                    "snapshot_id": "synthetic-example",
+                    "generated_at": "2026-07-28T00:00:00Z",
+                    "expires_at": "2026-07-28T00:15:00Z",
+                    "total": 1
+                  },
+                  "links": {
+                    "self": "https://example.invalid/api/v1/protocols",
+                    "documentation": "https://publicvpnlist.com/api/"
+                  }
+                }
+              }
+            }
+          },
+          "304": {"$ref": "#/components/responses/NotModified"},
+          "429": {"$ref": "#/components/responses/TooManyRequests"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/stats": {
+      "get": {
+        "operationId": "getStats",
+        "tags": ["Catalog"],
+        "summary": "Get current dataset counters",
+        "parameters": [
+          {"$ref": "#/components/parameters/IfNoneMatch"},
+          {"$ref": "#/components/parameters/IfModifiedSince"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Dataset counters",
+            "headers": {
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Last-Modified": {"$ref": "#/components/headers/LastModified"},
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"}
+            },
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/StatsResponse"},
+                "example": {
+                  "data": {
+                    "record_count": 1,
+                    "fresh_count": 1,
+                    "stale_count": 0,
+                    "countries_count": 1,
+                    "protocols": ["openvpn"]
+                  },
+                  "meta": {
+                    "schema_version": "1.0",
+                    "dataset_version": "20260728T000000Z-000000000000",
+                    "snapshot_id": "synthetic-example",
+                    "generated_at": "2026-07-28T00:00:00Z",
+                    "expires_at": "2026-07-28T00:15:00Z"
+                  },
+                  "links": {
+                    "self": "https://example.invalid/api/v1/stats",
+                    "documentation": "https://publicvpnlist.com/api/"
+                  }
+                }
+              }
+            }
+          },
+          "304": {"$ref": "#/components/responses/NotModified"},
+          "429": {"$ref": "#/components/responses/TooManyRequests"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/dataset": {
+      "get": {
+        "operationId": "getDataset",
+        "tags": ["Catalog"],
+        "summary": "Get dataset lifecycle metadata",
+        "parameters": [
+          {"$ref": "#/components/parameters/IfNoneMatch"},
+          {"$ref": "#/components/parameters/IfModifiedSince"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Dataset lifecycle and export links",
+            "headers": {
+              "ETag": {"$ref": "#/components/headers/ETag"},
+              "Last-Modified": {"$ref": "#/components/headers/LastModified"},
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"}
+            },
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/DatasetResponse"}
+              }
+            }
+          },
+          "304": {"$ref": "#/components/responses/NotModified"},
+          "429": {"$ref": "#/components/responses/TooManyRequests"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "tags": ["Operations"],
+        "summary": "Get lightweight snapshot health",
+        "description": "A read-only health view with a stricter independent rate limit. It does not reveal infrastructure hostnames or paths.",
+        "responses": {
+          "200": {
+            "description": "Snapshot health",
+            "headers": {
+              "Cache-Control": {"$ref": "#/components/headers/CacheControl"}
+            },
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/HealthResponse"},
+                "example": {
+                  "data": {
+                    "status": "ok",
+                    "snapshot_readable": true,
+                    "record_count": 1
+                  },
+                  "meta": {
+                    "schema_version": "1.0",
+                    "dataset_version": "20260728T000000Z-000000000000",
+                    "snapshot_id": "synthetic-example",
+                    "generated_at": "2026-07-28T00:00:00Z",
+                    "expires_at": "2026-07-28T00:15:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "429": {"$ref": "#/components/responses/TooManyRequests"},
+          "500": {"$ref": "#/components/responses/InternalError"}
+        }
+      }
+    }
   },
   "components": {
-    "schemas": {
-      "Server": {
-        "type":"object",
-        "required":["id","country_code","protocol","transport","port","technical_quality_score","last_checked_at"],
-        "properties":{
-          "id":{"type":"string","pattern":"^pvl_[a-f0-9]{24}$"},
-          "country_code":{"type":["string","null"]},
-          "country_name":{"type":["string","null"]},
-          "hostname":{"type":["string","null"]},
-          "ip":{"type":["string","null"]},
-          "protocol":{"type":"string","const":"openvpn"},
-          "transport":{"type":"string","enum":["tcp","udp"]},
-          "port":{"type":"integer"},
-          "speed_mbps":{"type":["number","null"]},
-          "latency_ms":{"type":["number","null"]},
-          "uptime_percent_7d":{"type":["number","null"]},
-          "technical_quality_score":{"type":"integer","minimum":0,"maximum":100},
-          "last_checked_at":{"type":["string","null"],"format":"date-time"},
-          "risk_flags":{"type":"array","items":{"type":"string"}}
+    "parameters": {
+      "PublicId": {
+        "name": "public_id",
+        "in": "path",
+        "required": true,
+        "description": "Stable public identifier; never a Bitrix element ID.",
+        "schema": {"type": "string", "pattern": "^pvl_[a-f0-9]{24}$"},
+        "example": "pvl_000000000000000000000001"
+      },
+      "Country": {
+        "name": "country",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "string", "pattern": "^[A-Z]{2}$"},
+        "example": "US"
+      },
+      "Protocol": {
+        "name": "protocol",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "string", "enum": ["openvpn"]}
+      },
+      "Transport": {
+        "name": "transport",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "string", "enum": ["tcp", "udp"]}
+      },
+      "Port": {
+        "name": "port",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "integer", "minimum": 1, "maximum": 65535}
+      },
+      "FreshWithin": {
+        "name": "fresh_within",
+        "in": "query",
+        "required": false,
+        "description": "Maximum age of last check in seconds.",
+        "schema": {"type": "integer", "minimum": 1, "maximum": 259200}
+      },
+      "MinSpeed": {
+        "name": "min_speed",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "number", "minimum": 0, "maximum": 100000}
+      },
+      "MaxLatency": {
+        "name": "max_latency",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "number", "minimum": 0, "maximum": 60000}
+      },
+      "MinUptime": {
+        "name": "min_uptime",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "number", "minimum": 0, "maximum": 100}
+      },
+      "Status": {
+        "name": "status",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "string", "enum": ["online"]}
+      },
+      "Sort": {
+        "name": "sort",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": ["speed", "latency", "uptime", "last_checked", "score", "first_seen"],
+          "default": "score"
         }
       },
-      "ListResponse": {
-        "type":"object",
-        "required":["data","meta","links"],
-        "properties":{"data":{"type":"array","items":{"$ref":"#/components/schemas/Server"}},"meta":{"type":"object"},"links":{"type":"object"}}
+      "Order": {
+        "name": "order",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "string", "enum": ["asc", "desc"], "default": "desc"}
       },
-      "Error": {
-        "type":"object",
-        "required":["error"],
-        "properties":{"error":{"type":"object","required":["code","message","request_id"],"properties":{"code":{"type":"string"},"message":{"type":"string"},"parameter":{"type":"string"},"request_id":{"type":"string"}}}}
+      "Page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "integer", "minimum": 1, "maximum": 1000000, "default": 1}
+      },
+      "PerPage": {
+        "name": "per_page",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "integer", "minimum": 1, "maximum": 200, "default": 50}
+      },
+      "Fields": {
+        "name": "fields",
+        "in": "query",
+        "required": false,
+        "description": "Comma-separated allowlist of public Server fields.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "pattern": "^[a-z_]+(?:,[a-z_]+)*$"
+        },
+        "example": "id,country_code,transport,port,last_checked_at"
+      },
+      "Format": {
+        "name": "format",
+        "in": "query",
+        "required": false,
+        "schema": {"type": "string", "enum": ["json"], "default": "json"}
+      },
+      "IfNoneMatch": {
+        "name": "If-None-Match",
+        "in": "header",
+        "required": false,
+        "schema": {"type": "string", "maxLength": 200}
+      },
+      "IfModifiedSince": {
+        "name": "If-Modified-Since",
+        "in": "header",
+        "required": false,
+        "schema": {"type": "string", "maxLength": 100}
       }
     },
-    "responses":{"Error":{"description":"Safe API error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}}
+    "headers": {
+      "ETag": {
+        "description": "Opaque validator for conditional requests.",
+        "schema": {"type": "string"}
+      },
+      "LastModified": {
+        "description": "HTTP date of the represented snapshot.",
+        "schema": {"type": "string"}
+      },
+      "CacheControl": {
+        "description": "Public cache policy for the current representation.",
+        "schema": {"type": "string"}
+      },
+      "RetryAfter": {
+        "description": "Seconds until another request should be attempted.",
+        "schema": {"type": "integer", "minimum": 1}
+      }
+    },
+    "schemas": {
+      "Server": {
+        "$ref": "../schema/servers.schema.json#/$defs/OpenVpnServer"
+      },
+      "ServerListItem": {
+        "$ref": "../schema/servers.schema.json#/$defs/OpenVpnServerProjection"
+      },
+      "ResponseMeta": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "dataset_version",
+          "snapshot_id",
+          "generated_at",
+          "expires_at"
+        ],
+        "properties": {
+          "schema_version": {"type": "string", "const": "1.0"},
+          "dataset_version": {
+            "type": "string",
+            "pattern": "^\\d{8}T\\d{6}Z-[a-f0-9]{12}$"
+          },
+          "snapshot_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "generated_at": {"type": "string", "format": "date-time"},
+          "expires_at": {"type": "string", "format": "date-time"},
+          "total": {"type": "integer", "minimum": 0},
+          "page": {"type": "integer", "minimum": 1},
+          "per_page": {"type": "integer", "minimum": 1, "maximum": 200},
+          "pages": {"type": "integer", "minimum": 0}
+        }
+      },
+      "Links": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["self", "documentation"],
+        "properties": {
+          "self": {"type": "string", "format": "uri"},
+          "next": {"type": ["string", "null"], "format": "uri"},
+          "prev": {"type": ["string", "null"], "format": "uri"},
+          "documentation": {"type": "string", "format": "uri"}
+        }
+      },
+      "ServerListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta", "links"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/ServerListItem"}
+          },
+          "meta": {"$ref": "#/components/schemas/ResponseMeta"},
+          "links": {"$ref": "#/components/schemas/Links"}
+        }
+      },
+      "ServerResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta", "links"],
+        "properties": {
+          "data": {"$ref": "#/components/schemas/Server"},
+          "meta": {"$ref": "#/components/schemas/ResponseMeta"},
+          "links": {"$ref": "#/components/schemas/Links"}
+        }
+      },
+      "Country": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["country_code", "country_name", "record_count"],
+        "properties": {
+          "country_code": {"type": "string", "pattern": "^[A-Z]{2}$"},
+          "country_name": {"type": ["string", "null"], "maxLength": 120},
+          "record_count": {"type": "integer", "minimum": 1}
+        }
+      },
+      "CountryListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta", "links"],
+        "properties": {
+          "data": {"type": "array", "items": {"$ref": "#/components/schemas/Country"}},
+          "meta": {"$ref": "#/components/schemas/ResponseMeta"},
+          "links": {"$ref": "#/components/schemas/Links"}
+        }
+      },
+      "Protocol": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["protocol", "transports", "record_count"],
+        "properties": {
+          "protocol": {"type": "string", "enum": ["openvpn"]},
+          "transports": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"enum": ["tcp", "udp"]}
+          },
+          "record_count": {"type": "integer", "minimum": 0}
+        }
+      },
+      "ProtocolListResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta", "links"],
+        "properties": {
+          "data": {"type": "array", "items": {"$ref": "#/components/schemas/Protocol"}},
+          "meta": {"$ref": "#/components/schemas/ResponseMeta"},
+          "links": {"$ref": "#/components/schemas/Links"}
+        }
+      },
+      "Stats": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "record_count",
+          "fresh_count",
+          "stale_count",
+          "countries_count",
+          "protocols"
+        ],
+        "properties": {
+          "record_count": {"type": "integer", "minimum": 0},
+          "fresh_count": {"type": "integer", "minimum": 0},
+          "stale_count": {"type": "integer", "minimum": 0},
+          "countries_count": {"type": "integer", "minimum": 0},
+          "protocols": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"enum": ["openvpn"]}
+          }
+        }
+      },
+      "StatsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta", "links"],
+        "properties": {
+          "data": {"$ref": "#/components/schemas/Stats"},
+          "meta": {"$ref": "#/components/schemas/ResponseMeta"},
+          "links": {"$ref": "#/components/schemas/Links"}
+        }
+      },
+      "DatasetMetadata": {
+        "allOf": [
+          {"$ref": "../schema/servers.schema.json#/$defs/DatasetMetadata"},
+          {
+            "type": "object",
+            "required": ["manifest_url", "exports_url", "stale_dataset"],
+            "properties": {
+              "manifest_url": {"type": "string", "format": "uri"},
+              "exports_url": {"type": "string", "format": "uri"},
+              "stale_dataset": {"type": "boolean"}
+            }
+          }
+        ]
+      },
+      "DatasetResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta", "links"],
+        "properties": {
+          "data": {"$ref": "#/components/schemas/DatasetMetadata"},
+          "meta": {"$ref": "#/components/schemas/ResponseMeta"},
+          "links": {"$ref": "#/components/schemas/Links"}
+        }
+      },
+      "Health": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "snapshot_readable", "record_count"],
+        "properties": {
+          "status": {"enum": ["ok", "stale"]},
+          "snapshot_readable": {"type": "boolean"},
+          "record_count": {"type": "integer", "minimum": 0}
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {"$ref": "#/components/schemas/Health"},
+          "meta": {"$ref": "#/components/schemas/ResponseMeta"}
+        }
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message", "request_id"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{1,63}$"
+              },
+              "message": {"type": "string", "minLength": 1, "maxLength": 300},
+              "parameter": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{0,63}$"
+              },
+              "request_id": {"type": "string", "minLength": 1, "maxLength": 128}
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "NotModified": {
+        "description": "The cached representation is current; no response body."
+      },
+      "BadRequest": {
+        "description": "Invalid parameter",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/Error"},
+            "example": {
+              "error": {
+                "code": "invalid_parameter",
+                "message": "country must be a two-letter ISO code.",
+                "parameter": "country",
+                "request_id": "synthetic-request-id"
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Server was not found",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/Error"},
+            "example": {
+              "error": {
+                "code": "not_found",
+                "message": "Server was not found",
+                "request_id": "synthetic-request-id"
+              }
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Rate limit exceeded",
+        "headers": {
+          "Retry-After": {"$ref": "#/components/headers/RetryAfter"}
+        },
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/Error"}
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Safe error without stack traces, SQL, paths or infrastructure names",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/Error"}
+          }
+        }
+      }
+    }
   }
 }
