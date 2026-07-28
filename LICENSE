@@ -1,0 +1,7 @@
+No blanket open-source license is granted to third-party endpoint data or VPN
+configuration files by this file.
+
+PublicVPNList-authored schemas, validation scripts and examples may be reviewed
+and used only after the repository owner selects and records an explicit code
+license. Dataset reuse is governed separately by DATA-LICENSE.md and the terms
+of each attributed upstream source.

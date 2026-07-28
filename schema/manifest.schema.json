@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "dataset_version", "snapshot_id", "generated_at", "record_count", "formats", "config_bundle"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "dataset_version": {"type": "string"},
+    "record_count": {"type": "integer", "minimum": 1},
+    "formats": {"type": "array", "minItems": 4},
+    "config_bundle": {
+      "type": "object",
+      "required": ["config_count", "sha256", "status"],
+      "properties": {"config_count": {"type": "integer", "minimum": 0}}
+    }
+  }
+}

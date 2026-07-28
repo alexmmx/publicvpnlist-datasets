@@ -1,0 +1,19 @@
+name: Dataset problem
+description: Report an incorrect, unwanted or stale public record without secrets.
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, private keys or complete VPN profiles.
+  - type: input
+    id: public_id
+    attributes:
+      label: Stable public ID
+      placeholder: pvl_...
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Reproducible details
+    validations:
+      required: true
