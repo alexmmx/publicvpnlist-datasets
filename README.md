@@ -4,6 +4,23 @@ This repository contains the public contract, schemas, client examples and
 offline validators for [PublicVPNList](https://publicvpnlist.com/). It is a
 **metadata dataset project**, not an archive of free VPN configurations.
 
+## API and desktop apps — October 2026
+
+Read the new public introductions:
+
+| Publication | What you can use |
+|---|---|
+| [PublicVPNList API: integrate checked VPN metadata](docs/publicvpnlist-api.md) | API access, filters, exports and a curl example |
+| [PublicVPNList VPN for Linux](docs/vpn-app-linux.md) | Version 0.1.8 beta, DEB and TAR.GZ downloads |
+| [PublicVPNList VPN for Windows](docs/vpn-app-windows.md) | Version 0.2.0 beta.1 preview and current publication status |
+
+The live API requires a free, private 24-hour Bearer key obtained at
+[publicvpnlist.com/api/](https://publicvpnlist.com/api/). Follow the access
+instructions in the API publication before running live examples below.
+Application downloads and their licenses are separate from this repository's
+metadata tooling. The Windows preview is not an announcement of general
+download availability.
+
 No real endpoint snapshot is currently published here. The included records
 are synthetic and use documentation-only IP ranges. Real snapshots may be
 added only after source-by-source redistribution rights have been confirmed.
