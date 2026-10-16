@@ -65,4 +65,4 @@ additive live fields, consult the linked website documentation.
 ## Desktop clients
 
 Prefer a desktop interface? Read about the [Linux beta](vpn-app-linux.md) and
-the [Windows test build preview](vpn-app-windows.md).
+the [Windows test beta](vpn-app-windows.md).

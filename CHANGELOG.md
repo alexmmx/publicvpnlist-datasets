@@ -9,8 +9,8 @@ and the project follows semantic versioning for its API and schema contracts.
 
 ### Added
 
-- Public introductions to API access and the Linux beta, plus a Windows test
-  build preview with its publication status and limitations.
+- Public introductions to API access and the Linux and Windows betas, with
+  verified official download links and Windows test-signing limitations.
 - Strict Draft 2020-12 schemas and a metadata-only WireGuard model.
 - Offline semantic, manifest, CSV, ZIP and credential-leak validation.
 - Positive and negative contract, security and mock-client tests.

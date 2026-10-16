@@ -12,14 +12,16 @@ Read the new public introductions:
 |---|---|
 | [PublicVPNList API: integrate checked VPN metadata](docs/publicvpnlist-api.md) | API access, filters, exports and a curl example |
 | [PublicVPNList VPN for Linux](docs/vpn-app-linux.md) | Version 0.1.8 beta, DEB and TAR.GZ downloads |
-| [PublicVPNList VPN for Windows](docs/vpn-app-windows.md) | Version 0.2.0 beta.1 preview and current publication status |
+| [PublicVPNList VPN for Windows](docs/vpn-app-windows.md) | Version 0.2.0 beta.1, Windows 11 x64 installer and setup |
 
 The live API requires a free, private 24-hour Bearer key obtained at
 [publicvpnlist.com/api/](https://publicvpnlist.com/api/). Follow the access
 instructions in the API publication before running live examples below.
 Application downloads and their licenses are separate from this repository's
-metadata tooling. The Windows preview is not an announcement of general
-download availability.
+metadata tooling. Download the [Linux beta](https://publicvpnlist.com/vpn-app/)
+or [Windows test beta](https://publicvpnlist.com/vpn-app/windows/) from the
+official website. The Windows installer uses a self-signed test certificate;
+it does not have a publicly trusted publisher signature.
 
 No real endpoint snapshot is currently published here. The included records
 are synthetic and use documentation-only IP ranges. Real snapshots may be

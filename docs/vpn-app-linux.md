@@ -47,4 +47,4 @@ Public servers may fail or log traffic; a connection check does not guarantee
 anonymity. Read the [Privacy Policy](https://publicvpnlist.com/privacy-policy/).
 
 For integrations, see the [API introduction](publicvpnlist-api.md). For the
-other desktop platform, see the [Windows preview](vpn-app-windows.md).
+other desktop platform, see the [Windows test beta](vpn-app-windows.md).
