@@ -20,8 +20,8 @@ instructions in the API publication before running live examples below.
 Application downloads and their licenses are separate from this repository's
 metadata tooling. Download the [Linux beta](https://publicvpnlist.com/vpn-app/)
 or [Windows test beta](https://publicvpnlist.com/vpn-app/windows/) from the
-official website. The Windows installer uses a self-signed test certificate;
-it does not have a publicly trusted publisher signature.
+official website. The Windows beta.2 installer is unsigned and does not have
+a publicly trusted publisher signature.
 
 No real endpoint snapshot is currently published here. The included records
 are synthetic and use documentation-only IP ranges. Real snapshots may be
