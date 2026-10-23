@@ -7,6 +7,14 @@ and the project follows semantic versioning for its API and schema contracts.
 
 ## Unreleased
 
+### Windows desktop beta.2 — 2026-10-23
+
+- Added Windows 10 22H2 / Windows 11 x64 installer support and fixed the
+  pre-install Windows 10 version rejection.
+- Linked the new installer, hashes, exact source and observed native checks.
+- Retained the previously tested VPN runtime and Windows 11 acceptance;
+  identified the new EXE as unsigned, separate from checksum signing.
+
 ### Added
 
 - Public introductions to API access and the Linux and Windows betas, with

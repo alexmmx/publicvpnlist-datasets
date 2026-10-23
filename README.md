@@ -12,7 +12,7 @@ Read the new public introductions:
 |---|---|
 | [PublicVPNList API: integrate checked VPN metadata](docs/publicvpnlist-api.md) | API access, filters, exports and a curl example |
 | [PublicVPNList VPN for Linux](docs/vpn-app-linux.md) | Version 0.1.8 beta, DEB and TAR.GZ downloads |
-| [PublicVPNList VPN for Windows](docs/vpn-app-windows.md) | Version 0.2.0 beta.1, Windows 11 x64 installer and setup |
+| [PublicVPNList VPN for Windows](docs/vpn-app-windows.md) | Version 0.2.0 beta.2, Windows 10 22H2 / Windows 11 x64 installer and setup |
 
 The live API requires a free, private 24-hour Bearer key obtained at
 [publicvpnlist.com/api/](https://publicvpnlist.com/api/). Follow the access
